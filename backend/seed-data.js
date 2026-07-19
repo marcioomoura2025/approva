@@ -23,7 +23,7 @@ async function addQuestion(q) {
      q.cargo || null, q.nivel || null, q.video_url || null]);
 }
 
-async function main() {
+async function seed() {
   await init();
 
   // Admin de demonstração
@@ -169,4 +169,9 @@ async function main() {
   console.log('✓ Seed concluído: 4 matérias, 7 tópicos, 1 texto-base e 8 questões.');
 }
 
-main().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });
+module.exports = { seed };
+
+// Permite rodar diretamente pelo terminal: `npm run seed`
+if (require.main === module) {
+  seed().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });
+}

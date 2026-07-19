@@ -34,7 +34,28 @@ app.use((err, _req, res, _next) => {
 });
 
 const PORT = process.env.PORT || 4000;
-init().then(() => {
+
+// Em hospedagens sem acesso a terminal (ex.: plano gratuito do Render), o banco
+// é populado automaticamente na primeira subida. Se já houver qualquer usuário,
+// nada é feito — logo, reinícios e novos deploys nunca duplicam dados.
+// Para desativar, defina AUTO_SEED=false nas variáveis de ambiente.
+async function autoSeed() {
+  if (String(process.env.AUTO_SEED).toLowerCase() === 'false') return;
+  const { get } = require('./db');
+  const row = await get('SELECT COUNT(*) AS n FROM users');
+  if (row?.n > 0) return;
+  console.log('Banco vazio detectado — criando dados iniciais…');
+  const { seed } = require('./seed-data');
+  await seed();
+}
+
+init().then(async () => {
+  try {
+    await autoSeed();
+  } catch (err) {
+    // Uma falha no seed não deve impedir o app de subir.
+    console.error('Aviso: não foi possível criar os dados iniciais:', err.message);
+  }
   app.listen(PORT, () => console.log(`✓ Approva API rodando em http://localhost:${PORT}`));
 }).catch(err => {
   console.error('Falha ao inicializar o banco:', err);

@@ -49,12 +49,30 @@ async function autoSeed() {
   await seed();
 }
 
+// Garante que o e-mail definido em ADMIN_EMAIL seja administrador, mesmo que a
+// conta já tivesse sido criada antes da variável existir. Roda a cada subida e
+// não altera nada se o usuário já for admin (ou se a variável não estiver definida).
+async function ensureAdmin() {
+  const email = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (!email) return;
+  const { get, run } = require('./db');
+  const user = await get('SELECT id, role FROM users WHERE email = ?', [email]);
+  if (!user) {
+    console.log(`ADMIN_EMAIL definido (${email}), mas ainda não há conta com esse e-mail. Cadastre-se e ela virá como administradora.`);
+    return;
+  }
+  if (user.role === 'admin') return;
+  await run("UPDATE users SET role = 'admin' WHERE id = ?", [user.id]);
+  console.log(`✓ Conta ${email} promovida a administradora.`);
+}
+
 init().then(async () => {
   try {
     await autoSeed();
+    await ensureAdmin();
   } catch (err) {
-    // Uma falha no seed não deve impedir o app de subir.
-    console.error('Aviso: não foi possível criar os dados iniciais:', err.message);
+    // Uma falha aqui não deve impedir o app de subir.
+    console.error('Aviso: não foi possível preparar os dados iniciais:', err.message);
   }
   app.listen(PORT, () => console.log(`✓ Approva API rodando em http://localhost:${PORT}`));
 }).catch(err => {

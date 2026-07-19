@@ -38,7 +38,7 @@ cd ../backend && npm start       # Express serve a API e o dist na porta 4000
 |---|---|---|
 | `PORT` | `4000` | Porta do servidor |
 | `JWT_SECRET` | (dev) | **Defina em produção.** Segredo dos tokens (validade 30 dias) |
-| `ADMIN_EMAIL` | — | E-mail que vira admin ao se registrar (além do 1º usuário) |
+| `ADMIN_EMAIL` | — | E-mail administrador. Vira admin ao se registrar **e também** se a conta já existir (promovida a cada subida do app) |
 | `PASS_THRESHOLD` | `60` | Meta de aprovação **padrão** — cada usuário pode definir a sua no app |
 | `AUTO_SEED` | `true` | Cria os dados iniciais automaticamente se o banco estiver vazio. `false` desativa |
 | `TURSO_DATABASE_URL` | — | URL do banco Turso (produção). Sem ela, usa `file:approva.db` local |
@@ -69,7 +69,7 @@ git push -u origin main
    - Start command: `cd backend && npm start`
    - Environment: `JWT_SECRET`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` (e opcionais acima)
 4. **Dados iniciais:** nada a fazer — na primeira subida, se o banco estiver vazio, o app cria sozinho as matérias, questões de exemplo e o administrador de demonstração. Reinícios e novos deploys **não** duplicam dados (para desativar, defina `AUTO_SEED=false`).
-5. **Troque o administrador padrão.** O login `admin@aprova.local / admin123` é público (consta neste README). Crie sua conta pelo app e defina a variável `ADMIN_EMAIL` com o seu e-mail para que ela tenha permissão de administrador.
+5. **Troque o administrador padrão.** O login `admin@aprova.local / admin123` é público (consta neste README). Crie sua conta pelo app e defina a variável `ADMIN_EMAIL` com o seu e-mail — funciona tanto para contas novas quanto para contas já existentes (a promoção ocorre no próximo reinício).
 
 ## Funcionalidades
 

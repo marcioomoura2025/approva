@@ -21,7 +21,11 @@ export async function api(path, { method = 'GET', body, formData } = {}) {
     throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão.');
   }
 
-  if (res.status === 401) {
+  // Um 401 vindo do próprio login/registro significa credencial inválida —
+  // não é sessão expirada. Nesses casos, repassa a mensagem real da API.
+  const isAuthAttempt = path === '/login' || path === '/register';
+
+  if (res.status === 401 && !isAuthAttempt) {
     setToken(null);
     // Sessão expirada: envia para o login preservando a mensagem.
     if (!location.pathname.startsWith('/login')) location.href = '/login';

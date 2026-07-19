@@ -1,11 +1,22 @@
 // Camada de dados — SQLite local via @libsql/client.
-// Para usar Turso em produção basta definir DATABASE_URL e DATABASE_AUTH_TOKEN.
+// Em produção, use Turso definindo TURSO_DATABASE_URL e TURSO_AUTH_TOKEN
+// (os nomes DATABASE_URL / DATABASE_AUTH_TOKEN também são aceitos).
 require('dotenv').config();
 const { createClient } = require('@libsql/client');
 
+const remoteUrl = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL || null;
+const remoteToken = process.env.TURSO_AUTH_TOKEN || process.env.DATABASE_AUTH_TOKEN || undefined;
+
+if (remoteUrl) {
+  console.log(`✓ Banco remoto (Turso) configurado: ${String(remoteUrl).replace(/\/\/.*@/, '//')}`);
+} else if (process.env.RENDER || process.env.NODE_ENV === 'production') {
+  // Sem banco remoto em produção os dados somem a cada deploy/reinício.
+  console.warn('⚠ ATENÇÃO: nenhum banco remoto configurado. Os dados serão gravados em arquivo local e SERÃO PERDIDOS no próximo deploy. Defina TURSO_DATABASE_URL e TURSO_AUTH_TOKEN.');
+}
+
 const db = createClient({
-  url: process.env.DATABASE_URL || 'file:approva.db',
-  authToken: process.env.DATABASE_AUTH_TOKEN || undefined,
+  url: remoteUrl || 'file:approva.db',
+  authToken: remoteToken,
 });
 
 // Helpers: sempre retornam tipos simples de JS.

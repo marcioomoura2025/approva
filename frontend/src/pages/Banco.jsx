@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, apiDownload } from '../api';
+import { useAuth } from '../context/AuthContext';
 import { PageHead, Spinner, Empty, Icons, LETTERS } from '../components/UI';
 
 const TABS = [
@@ -7,6 +8,7 @@ const TABS = [
   { key: 'gerenciar', label: 'Gerenciar' },
   { key: 'importar', label: 'Importar Excel' },
   { key: 'textos', label: 'Textos-base' },
+  { key: 'usuarios', label: 'Usuários' },
 ];
 
 const emptyForm = {
@@ -50,6 +52,7 @@ export default function Banco() {
       {tab === 'gerenciar' && <TabGerenciar subjects={subjects} passages={passages} />}
       {tab === 'importar' && <TabImportar onDone={loadCatalog} />}
       {tab === 'textos' && <TabTextos passages={passages} onChange={loadCatalog} />}
+      {tab === 'usuarios' && <TabUsuarios />}
     </>
   );
 }
@@ -508,5 +511,127 @@ function TabTextos({ passages, onChange }) {
         ))}
       </section>
     </div>
+  );
+}
+
+
+/* ---------- Usuários (admin) ---------- */
+function TabUsuarios() {
+  const { user: current } = useAuth();
+  const [users, setUsers] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [resetting, setResetting] = useState(null); // id do usuário em edição
+  const [newPass, setNewPass] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(() => {
+    api('/usuarios').then(setUsers).catch(e => setMsg({ type: 'error', text: e.message }));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const salvarSenha = async (u) => {
+    if (newPass.length < 6) { setMsg({ type: 'error', text: 'A nova senha deve ter pelo menos 6 caracteres.' }); return; }
+    setBusy(true); setMsg(null);
+    try {
+      await api(`/usuarios/${u.id}/senha`, { method: 'PUT', body: { password: newPass } });
+      setMsg({ type: 'ok', text: `Senha de ${u.email} redefinida. Informe a nova senha ao usuário.` });
+      setResetting(null); setNewPass('');
+    } catch (e) { setMsg({ type: 'error', text: e.message }); }
+    finally { setBusy(false); }
+  };
+
+  const alterarPapel = async (u, role) => {
+    const acao = role === 'admin' ? 'tornar administrador' : 'remover o acesso de administrador de';
+    if (!confirm(`Deseja ${acao} ${u.name}?`)) return;
+    setMsg(null);
+    try {
+      await api(`/usuarios/${u.id}/papel`, { method: 'PUT', body: { role } });
+      load();
+    } catch (e) { setMsg({ type: 'error', text: e.message }); }
+  };
+
+  return (
+    <section className="card">
+      <div className="card-head">
+        <div>
+          <h2>Usuários {users ? `· ${users.length}` : ''}</h2>
+          <p className="card-sub">Redefina a senha de quem esqueceu a sua e gerencie quem tem acesso de administrador.</p>
+        </div>
+      </div>
+
+      {msg && <div className={`alert ${msg.type === 'ok' ? 'alert-ok' : 'alert-error'}`}>{msg.text}</div>}
+      {!users && <Spinner />}
+
+      {users && (
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Simulados</th><th style={{ textAlign: 'right' }}>Ações</th></tr>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} className={u.id === current?.id ? 'is-you' : ''}>
+                  <td>
+                    <strong>{u.name}</strong>
+                    {u.id === current?.id && <span className="badge badge-gold" style={{ marginLeft: 8 }}>você</span>}
+                  </td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{u.email}</td>
+                  <td>
+                    <span className={`badge ${u.role === 'admin' ? 'badge-gold' : ''}`}>
+                      {u.role === 'admin' ? 'administrador' : 'estudante'}
+                    </span>
+                  </td>
+                  <td>{u.simulados}</td>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => { setResetting(u.id); setNewPass(''); setMsg(null); }}>
+                      Redefinir senha
+                    </button>
+                    {u.role === 'admin' ? (
+                      u.id !== current?.id && (
+                        <button className="btn btn-ghost btn-sm" style={{ marginLeft: 6 }} onClick={() => alterarPapel(u, 'user')}>
+                          Remover admin
+                        </button>
+                      )
+                    ) : (
+                      <button className="btn btn-ghost btn-sm" style={{ marginLeft: 6 }} onClick={() => alterarPapel(u, 'admin')}>
+                        Tornar admin
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {resetting && users && (
+        <div className="reset-box">
+          {(() => {
+            const u = users.find(x => x.id === resetting);
+            return (
+              <>
+                <div className="field" style={{ marginBottom: 10 }}>
+                  <label>Nova senha para <strong>{u?.email}</strong></label>
+                  <input
+                    type="text" value={newPass} autoFocus minLength={6}
+                    placeholder="Mínimo de 6 caracteres"
+                    onChange={e => setNewPass(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') salvarSenha(u); if (e.key === 'Escape') setResetting(null); }}
+                  />
+                  <div className="hint">A senha aparece em texto para você poder anotá-la e repassar ao usuário.</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-gold btn-sm" onClick={() => salvarSenha(u)} disabled={busy}>
+                    {busy ? 'Salvando…' : 'Salvar nova senha'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => { setResetting(null); setNewPass(''); }}>Cancelar</button>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+    </section>
   );
 }

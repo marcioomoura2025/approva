@@ -485,3 +485,8 @@ button { border: none; background: none; padding: 0; }
 .field .inline-add input:focus { border-color: var(--navy-600); outline: none; box-shadow: 0 0 0 3px rgba(41,69,110,0.1); }
 .field .inline-add input:disabled { opacity: 0.55; cursor: not-allowed; }
 .field .inline-add .btn { flex: 0 0 auto; white-space: nowrap; }
+
+/* Caixa de redefinição de senha (aba Usuários) */
+.reset-box { margin-top: 16px; padding: 16px 18px; border: 1.5px solid var(--gold); border-radius: 12px; background: var(--gold-soft); animation: fadeUp .3s ease both; }
+.reset-box .field { margin-bottom: 0; }
+.reset-box input { background: var(--card); }

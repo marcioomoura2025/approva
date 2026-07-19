@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { get, run } = require('../db');
-const { auth, sign } = require('../middleware/auth');
+const { all, get, run } = require('../db');
+const { auth, adminOnly, sign } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -54,6 +54,46 @@ router.put('/me/meta', auth, async (req, res) => {
   }
   await run('UPDATE users SET pass_threshold = ? WHERE id = ?', [v, req.user.id]);
   res.json({ pass_threshold: v });
+});
+
+// ---------- Gestão de usuários (admin) ----------
+
+// Lista os usuários cadastrados.
+router.get('/usuarios', auth, adminOnly, async (_req, res) => {
+  const users = await all(`
+    SELECT u.id, u.name, u.email, u.role, u.created_at,
+           (SELECT COUNT(*) FROM simulados s WHERE s.user_id = u.id) AS simulados
+    FROM users u ORDER BY u.role DESC, u.name`);
+  res.json(users);
+});
+
+// Redefine a senha de um usuário (para quem esqueceu a própria).
+router.put('/usuarios/:id/senha', auth, adminOnly, async (req, res) => {
+  const password = String(req.body?.password ?? '');
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres.' });
+  }
+  const user = await get('SELECT id, email FROM users WHERE id = ?', [req.params.id]);
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+
+  const hash = await bcrypt.hash(password, 10);
+  await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user.id]);
+  res.json({ ok: true, email: user.email });
+});
+
+// Promove ou rebaixa um usuário.
+router.put('/usuarios/:id/papel', auth, adminOnly, async (req, res) => {
+  const role = String(req.body?.role ?? '');
+  if (!['admin', 'user'].includes(role)) {
+    return res.status(400).json({ error: 'Papel inválido.' });
+  }
+  const user = await get('SELECT id FROM users WHERE id = ?', [req.params.id]);
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  if (Number(user.id) === Number(req.user.id) && role !== 'admin') {
+    return res.status(400).json({ error: 'Você não pode remover o seu próprio acesso de administrador.' });
+  }
+  await run('UPDATE users SET role = ? WHERE id = ?', [role, user.id]);
+  res.json({ ok: true, role });
 });
 
 module.exports = router;

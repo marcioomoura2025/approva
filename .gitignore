@@ -1,0 +1,14 @@
+# Dependências
+node_modules/
+
+# Build do frontend (gerado no deploy)
+frontend/dist/
+
+# Banco local e variáveis de ambiente
+backend/*.db
+backend/.env
+.env
+
+# Diversos
+.DS_Store
+*.log

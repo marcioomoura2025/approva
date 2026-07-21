@@ -39,7 +39,7 @@ export default function Revisoes() {
 
       {tab === 'erros' && (
         <div className="alert alert-info">
-          <Icons.foot size={16} />
+          <Icons.foot size={18} />
           <span>
             Este caderno se monta sozinho: entram as questões que você <strong>errou</strong> e também as que <strong>acertou no chute</strong> —
             porque acerto na sorte não é conteúdo dominado.
@@ -76,7 +76,7 @@ export default function Revisoes() {
           extraBadges={tab === 'erros' ? (
             <>
               {q.wrong_count > 0 && <span className="badge badge-bad"><Icons.x size={13} /> {q.wrong_count} erro(s)</span>}
-              {q.guess_count > 0 && <span className="badge badge-chute"><Icons.foot size={13} /> {q.guess_count} chute(s)</span>}
+              {q.guess_count > 0 && <span className="badge badge-chute"><Icons.foot size={15} /> {q.guess_count} chute(s)</span>}
             </>
           ) : null}
         />

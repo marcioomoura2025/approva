@@ -77,10 +77,10 @@ export default function Resultado() {
 
       {luckyHits > 0 && (
         <div className="alert alert-warn no-print">
-          <Icons.foot size={16} />
+          <Icons.foot size={18} />
           <span>
             <strong>{luckyHits} acerto(s) foram no chute.</strong> Eles contam pontos, mas não contam conhecimento — as questões
-            aparecem abaixo com o selo <span className="badge badge-chute" style={{ verticalAlign: 'middle' }}><Icons.foot size={12} /> Chutou</span> e
+            aparecem abaixo com o selo <span className="badge badge-chute" style={{ verticalAlign: 'middle' }}><Icons.foot size={14} /> Chutou</span> e
             já entraram no seu caderno de erros &amp; chutes.
           </span>
         </div>

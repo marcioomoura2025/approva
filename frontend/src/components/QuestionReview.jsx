@@ -52,7 +52,7 @@ export default function QuestionReview({ q, number, extraBadges = null, onStateC
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {extraBadges}
-          {q.guessed && <span className="badge badge-chute"><Icons.foot size={13} /> Chutou</span>}
+          {q.guessed && <span className="badge badge-chute"><Icons.foot size={15} /> Chutou</span>}
           {skipped && <span className="badge badge-bad"><Icons.clock size={13} /> Tempo esgotado</span>}
         </div>
       </div>

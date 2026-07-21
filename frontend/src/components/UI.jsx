@@ -7,6 +7,11 @@ import { useAuth } from '../context/AuthContext';
 const I = (path, vb = '0 0 24 24') => ({ size = 18 }) => (
   <svg width={size} height={size} viewBox={vb} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 );
+
+/* Ícones preenchidos (silhueta). Herdam a cor do texto via currentColor. */
+const F = (path, vb = '0 -960 960 960') => ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox={vb} fill="currentColor" aria-hidden="true">{path}</svg>
+);
 export const Icons = {
   home: I(<><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></>),
   plus: I(<><path d="M12 5v14" /><path d="M5 12h14" /></>),
@@ -18,8 +23,8 @@ export const Icons = {
   logout: I(<><path d="M15 4h5v16h-5" /><path d="M11 8l-4 4 4 4" /><path d="M7 12h11" /></>),
   star: I(<path d="m12 3 2.7 5.7 6.3.8-4.6 4.3 1.2 6.2L12 17l-5.6 3 1.2-6.2L3 9.5l6.3-.8z" />),
   flag: I(<><path d="M5 21V4" /><path d="M5 4h13l-2.5 4L18 12H5" /></>),
-  // Pé/chuteira "chutando" — símbolo do chute
-  foot: I(<><path d="M8.2 3h3.9v6.4c0 1.3 1 2.3 2.3 2.3h1.7c2.9 0 5.4 1.9 5.4 4.4 0 1-.8 1.9-1.9 1.9H9.7a1.5 1.5 0 0 1-1.5-1.5V3z" /><path d="M8.2 14.4h13.2" /><path d="M2.6 7.6h2.7" /><path d="M2 11.4h3.3" /></>),
+  // Pé descalço (Material Symbols "barefoot") — símbolo do chute
+  foot: F(<path d="M198.5-658.68q-8.5-8.67-8.5-21.5 0-12.82 8.68-21.32 8.67-8.5 21.5-8.5 12.82 0 21.32 8.68 8.5 8.67 8.5 21.5 0 12.82-8.68 21.32-8.67 8.5-21.5 8.5-12.82 0-21.32-8.68ZM400-80q-66 0-113-47t-47-113v-240q0-100 70-170t170-70h73q69 0 118 46.5T720-559q0 46-24.5 84.5T629-416q-32 15-50.5 44.5T560-307v67q0 67-46.5 113.5T400-80ZM298.5-728.63Q290-737.25 290-750v-40q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v40q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM471-169q29-29 29-71v-67q0-52.23 27.56-96.36Q555.11-447.49 603-470q26-13 41.5-37.22T660-560q0-42-31.5-71T553-660h-73q-75 0-127.5 52.5T300-480v240q0 42 29 71t71 29q42 0 71-29Zm-52.5-599.63Q410-777.25 410-790v-40q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v40q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63Zm120 0Q530-777.25 530-790v-60q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v60q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63Zm126 34.05Q650-749.17 650-770v-60q0-20.83 14.62-35.42Q679.24-880 700.12-880q20.88 0 35.38 14.58Q750-850.83 750-830v60q0 20.83-14.62 35.42Q720.76-720 699.88-720q-20.88 0-35.38-14.58ZM400-480Z" />),
   print: I(<><path d="M7 8V3h10v5" /><rect x="4" y="8" width="16" height="9" rx="2" /><path d="M7 14h10v7H7z" /></>),
   clock: I(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
   check: I(<path d="m4.5 12.5 5 5L20 6" />),

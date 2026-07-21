@@ -224,7 +224,7 @@ export default function Resolucao() {
               {q.cargo && <span>{q.cargo}</span>}
             </div>
           </div>
-          {q.answered && q.guessed && <span className="badge badge-chute"><Icons.foot size={13} /> Você chutou</span>}
+          {q.answered && q.guessed && <span className="badge badge-chute"><Icons.foot size={15} /> Você chutou</span>}
         </div>
 
         {q.passage && (
@@ -268,7 +268,7 @@ export default function Resolucao() {
             </button>
             <div>
               <button type="button" className={`chute-toggle ${chute ? 'active' : ''}`} onClick={() => setChute(c => !c)} aria-pressed={chute}>
-                <Icons.foot size={15} /> {chute ? 'Estou chutando' : 'Marcar como chute'}
+                <Icons.foot size={17} /> {chute ? 'Estou chutando' : 'Marcar como chute'}
               </button>
               <div className="chute-help">Respondeu na sorte? Marque: mesmo se acertar, o tópico entra na sua lista de estudo.</div>
             </div>
@@ -309,7 +309,7 @@ export default function Resolucao() {
         <div className="flag-row">
           {q.answered && (
             <button className={`flag-btn ${q.guessed ? 'on-chute' : ''}`} onClick={toggleChuteAfter}>
-              <Icons.foot size={14} /> {q.guessed ? 'Marcada como chute' : 'Foi chute? Marcar'}
+              <Icons.foot size={16} /> {q.guessed ? 'Marcada como chute' : 'Foi chute? Marcar'}
             </button>
           )}
           <button className={`flag-btn ${q.review ? 'on' : ''}`} onClick={() => toggleFlag('review')}>

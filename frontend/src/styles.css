@@ -260,7 +260,7 @@ table.data tr.is-you td:first-child{box-shadow:inset 3px 0 0 var(--gold);}
 .chute-toggle:hover{background:var(--chute-soft);}
 .chute-toggle.active{background:var(--chute);color:#fff;border-style:solid;box-shadow:0 8px 20px rgba(124,92,191,.4);}
 .chute-toggle svg{transition:transform .2s;}
-.chute-toggle:hover svg{transform:rotate(-14deg);}
+.chute-toggle:hover svg{transform:rotate(-10deg) translateY(-1px);}
 .chute-toggle.active svg{animation:kick .55s ease;}
 .chute-help{font-size:12.5px;color:var(--muted);margin-top:6px;}
 .solve-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:22px;}
@@ -386,7 +386,7 @@ table.data tr.is-you td:first-child{box-shadow:inset 3px 0 0 var(--gold);}
 /* ============ MOVIMENTO ============ */
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 @keyframes popIn{0%{opacity:0;transform:scale(.55);}70%{transform:scale(1.12);}100%{opacity:1;transform:scale(1);}}
-@keyframes kick{0%{transform:rotate(0);}30%{transform:rotate(-18deg) translateX(-1px);}60%{transform:rotate(11deg) translateX(2px);}100%{transform:rotate(0);}}
+@keyframes kick{0%{transform:rotate(0) translateY(0);}25%{transform:rotate(-12deg) translateY(-3px);}55%{transform:rotate(8deg) translateY(-1px);}100%{transform:rotate(0) translateY(0);}}
 @keyframes floatGlow{0%,100%{opacity:.55;transform:translateY(0);}50%{opacity:.95;transform:translateY(-8px);}}
 @keyframes pulseWarn{0%,100%{opacity:1;}50%{opacity:.6;}}
 .page-head{animation:fadeUp .45s ease both;}
@@ -406,7 +406,7 @@ table.data tr.is-you td:first-child{box-shadow:inset 3px 0 0 var(--gold);}
 .result-grid-bubbles .rb{animation:popIn .4s cubic-bezier(.3,1.4,.5,1) both;}
 .result-grid-bubbles .rb:nth-child(2n){animation-delay:.05s;}
 .result-grid-bubbles .rb:nth-child(3n){animation-delay:.1s;}
-.badge-chute svg{transform:rotate(-8deg);}
+.badge-chute svg{transform:rotate(-6deg);}
 
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.001s !important;transition-duration:.001s !important;}

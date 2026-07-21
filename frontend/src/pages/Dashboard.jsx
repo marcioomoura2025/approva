@@ -59,7 +59,7 @@ export default function Dashboard() {
                     <tr key={t.id}>
                       <td>{t.name}</td>
                       <td><span className={`badge ${t.dominio_real >= meta ? 'badge-ok' : 'badge-bad'}`}>{t.dominio_real}%</span></td>
-                      <td>{t.chutes > 0 ? <span className="badge badge-chute"><Icons.foot size={13} /> {t.chutes}</span> : '—'}</td>
+                      <td>{t.chutes > 0 ? <span className="badge badge-chute"><Icons.foot size={15} /> {t.chutes}</span> : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

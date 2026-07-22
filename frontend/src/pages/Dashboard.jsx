@@ -36,7 +36,7 @@ export default function Dashboard() {
       <div className="grid grid-4">
         <StatCard tone="navy" icon="check" label="Aproveitamento" value={geral.aproveitamento} suffix="%"
           foot={`${geral.total_acertos} acertos em ${geral.total_respondidas} questões`} />
-        <StatCard tone="gold" icon="trendUp" label="Domínio real" value={geral.dominio_real} suffix="%"
+        <StatCard tone="gold" icon="dominio" label="Domínio real" value={geral.dominio_real} suffix="%"
           foot={`desconta ${geral.acertos_no_chute} acerto(s) no chute`} />
         <StatCard icon="list" label="Simulados" value={geral.simulados_finalizados}
           foot={`média de ${geral.media_simulados}% por prova`} />

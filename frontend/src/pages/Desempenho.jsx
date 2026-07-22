@@ -68,7 +68,7 @@ export default function Desempenho() {
       <div className="grid grid-4">
         <StatCard tone="navy" icon="check" label="Aproveitamento geral" value={geral.aproveitamento} suffix="%"
           foot={`${geral.total_acertos}/${geral.total_respondidas} questões`} />
-        <StatCard tone="gold" icon="trendUp" label="Domínio real" value={geral.dominio_real} suffix="%"
+        <StatCard tone="gold" icon="dominio" label="Domínio real" value={geral.dominio_real} suffix="%"
           foot={`${geral.chutes} chute(s), ${geral.acertos_no_chute} deram certo`} />
         <StatCard tone="chute" icon="foot" label="Total de chutes" value={geral.chutes}
           foot={`${pctChutes}% das respostas foram na sorte`} />

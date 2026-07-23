@@ -16,6 +16,7 @@ app.use('/api', require('./routes/importacao'));
 app.use('/api', require('./routes/simulados'));
 app.use('/api', require('./routes/interacoes'));
 app.use('/api', require('./routes/stats'));
+app.use('/api', require('./routes/revisao'));
 
 // Em produção, o mesmo servidor entrega o build estático do frontend.
 const distDir = path.join(__dirname, '..', 'frontend', 'dist');

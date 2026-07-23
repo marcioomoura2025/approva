@@ -8,6 +8,7 @@ import Resolucao from './pages/Resolucao';
 import Resultado from './pages/Resultado';
 import Impressao from './pages/Impressao';
 import Revisoes from './pages/Revisoes';
+import RevisaoProgramada from './pages/RevisaoProgramada';
 import Desempenho from './pages/Desempenho';
 import Ranking from './pages/Ranking';
 import Banco from './pages/Banco';
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="/simulados/:id" element={<Private><Resolucao /></Private>} />
           <Route path="/simulados/:id/resultado" element={<Private><Resultado /></Private>} />
           <Route path="/revisoes" element={<Private><Revisoes /></Private>} />
+          <Route path="/revisao-programada" element={<Private><RevisaoProgramada /></Private>} />
           <Route path="/desempenho" element={<Private><Desempenho /></Private>} />
           <Route path="/ranking" element={<Private><Ranking /></Private>} />
           <Route path="/banco" element={<Private><AdminOnly><Banco /></AdminOnly></Private>} />

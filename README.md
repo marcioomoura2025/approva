@@ -80,6 +80,7 @@ git push -u origin main
 - **Chute 🎲** — marque quando responder na sorte; acerto no chute não conta como domínio e a questão entra no caderno de erros & chutes.
 - **Interações** — favoritar, marcar para revisão, anotações pessoais por questão.
 - **Revisões** — abas: marcadas p/ revisão · favoritas · erros & chutes (montado automaticamente).
+- **Revisão programada (repetição espaçada)** — o app calcula, a partir do histórico, quando revisar cada tópico e avisa quando a data chega: errou → 2 dias, acertou no chute → 3, acertou → 7, domínio consolidado → 16. Um card no Painel e uma tela dedicada listam os tópicos vencidos e montam a revisão com um clique (uma questão por tópico, até 20 por sessão).
 - **Meta de aprovação pessoal** — cada usuário define seu % mínimo (chip editável no Painel e no Desempenho); o "Aprovado" do resultado e os selos verde/vermelho seguem essa meta.
 - **Estatísticas** — aproveitamento vs **domínio real**, por matéria e tópico, pontos fracos, evolução, tempo médio.
 - **Dicas de prova** — cinco boas práticas fixas no Painel e uma dica rotativa durante a resolução.

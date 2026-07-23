@@ -490,3 +490,38 @@ button { border: none; background: none; padding: 0; }
 .reset-box { margin-top: 16px; padding: 16px 18px; border: 1.5px solid var(--gold); border-radius: 12px; background: var(--gold-soft); animation: fadeUp .3s ease both; }
 .reset-box .field { margin-bottom: 0; }
 .reset-box input { background: var(--card); }
+
+/* ============ REPETIÇÃO ESPAÇADA ============ */
+
+/* Banner do Painel */
+.review-banner{display:flex;align-items:center;gap:16px;margin-bottom:18px;padding:16px 20px;border-radius:var(--radius-lg);
+  background:linear-gradient(150deg,var(--navy-700),var(--navy-950));color:var(--paper);
+  box-shadow:0 8px 24px rgba(21,38,65,.18);transition:transform .16s ease,box-shadow .16s ease;animation:fadeUp .5s ease both;}
+.review-banner:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(21,38,65,.28);color:var(--paper);}
+.review-banner .rb-ic{flex:0 0 auto;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:rgba(180,147,68,.22);color:var(--gold-bright);}
+.review-banner .rb-text{flex:1;display:flex;flex-direction:column;gap:2px;}
+.review-banner .rb-text strong{font-family:var(--font-display);font-size:17px;font-weight:700;}
+.review-banner .rb-text span{font-size:13.5px;color:rgba(248,248,246,.75);}
+.review-banner .rb-go{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;
+  color:var(--gold-bright);background:rgba(180,147,68,.14);border:1px solid rgba(180,147,68,.4);border-radius:999px;padding:8px 16px;}
+
+/* Chamada da tela dedicada */
+.review-cta{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  padding:22px 24px;border-radius:var(--radius-lg);border:1.5px solid var(--gold);background:var(--gold-soft);animation:fadeUp .45s ease both;}
+.review-cta>div{display:flex;align-items:center;gap:18px;}
+.review-cta .rc-count{font-family:var(--font-display);font-weight:800;font-size:44px;line-height:1;color:var(--navy);}
+.review-cta .rc-text{display:flex;flex-direction:column;gap:3px;}
+.review-cta .rc-text strong{font-size:17px;color:var(--ink);}
+.review-cta .rc-urgent{font-size:13px;font-weight:600;color:var(--chute);}
+.review-note{margin:12px 2px 0;font-size:13px;color:var(--muted);}
+
+/* Lista de tópicos vencidos */
+.review-list{margin-top:20px;display:grid;gap:10px;}
+.review-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:14px 18px;background:var(--card);border:1px solid var(--line);border-radius:14px;transition:border-color .15s,box-shadow .15s,transform .15s;animation:fadeUp .4s ease both;}
+.review-row:hover{border-color:var(--gold);box-shadow:0 6px 16px rgba(180,147,68,.1);transform:translateX(3px);}
+.review-row .rr-topic{font-weight:600;font-size:15px;color:var(--ink);}
+.review-row .rr-subject{font-size:12.5px;color:var(--muted);font-family:var(--font-mono);margin-top:2px;}
+.review-row .rr-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.review-row .rr-when{font-size:12.5px;color:var(--muted);}

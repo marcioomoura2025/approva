@@ -14,14 +14,15 @@ export default function Dashboard() {
       api('/stats/geral'),
       api('/stats/dificuldades'),
       api('/simulados'),
-    ]).then(([geral, dificuldades, simulados]) => {
-      setData({ geral, dificuldades, simulados: simulados.slice(0, 5) });
+      api('/revisao-programada/resumo'),
+    ]).then(([geral, dificuldades, simulados, revisao]) => {
+      setData({ geral, dificuldades, simulados: simulados.slice(0, 5), revisao });
     }).catch(e => setError(e.message));
   }, []);
 
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!data) return <Spinner />;
-  const { geral, dificuldades, simulados } = data;
+  const { geral, dificuldades, simulados, revisao } = data;
   const firstName = (user?.name || '').split(' ')[0];
   const meta = user?.pass_threshold ?? 60;
 
@@ -32,6 +33,19 @@ export default function Dashboard() {
         title={`Olá, ${firstName}!`}
         lead="Um resumo do seu preparo até aqui — e por onde vale continuar."
       />
+
+      {revisao.total > 0 && (
+        <Link to="/revisao-programada" className="review-banner">
+          <span className="rb-ic"><Icons.refresh size={20} /></span>
+          <span className="rb-text">
+            <strong>{revisao.total} {revisao.total === 1 ? 'tópico pronto' : 'tópicos prontos'} para revisar</strong>
+            {revisao.urgentes > 0
+              ? <span>{revisao.urgentes} de atenção — você errou ou acertou no chute</span>
+              : <span>revise agora para fixar antes de esquecer</span>}
+          </span>
+          <span className="rb-go">Revisar <Icons.arrowRight size={16} /></span>
+        </Link>
+      )}
 
       <div className="grid grid-4">
         <StatCard tone="navy" icon="check" label="Aproveitamento" value={geral.aproveitamento} suffix="%"

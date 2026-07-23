@@ -30,6 +30,7 @@ export const Icons = {
   check: I(<path d="m4.5 12.5 5 5L20 6" />),
   x: I(<><path d="M6 6l12 12" /><path d="M18 6 6 18" /></>),
   download: I(<><path d="M12 3v12" /><path d="m7 11 5 5 5-5" /><path d="M4 20h16" /></>),
+  refresh: I(<><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></>),
   target: I(<><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="0.8" fill="currentColor" /></>),
   bulb: I(<><path d="M9 18h6" /><path d="M10 21h4" /><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1.4-1 2.5h-6c0-1.1-.3-1.9-1-2.5A6 6 0 0 1 12 3z" /></>),
   menu: I(<><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>),
@@ -114,6 +115,7 @@ const NAV = [
   { to: '/', label: 'Início', icon: 'home', end: true },
   { to: '/novo', label: 'Novo simulado', icon: 'plus' },
   { to: '/revisoes', label: 'Revisões', icon: 'bookmark' },
+  { to: '/revisao-programada', label: 'Revisão programada', icon: 'refresh' },
   { to: '/desempenho', label: 'Desempenho', icon: 'chart' },
   { to: '/ranking', label: 'Ranking', icon: 'trophy' },
 ];

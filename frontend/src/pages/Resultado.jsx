@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { Spinner, Icons, fmtTime } from '../components/UI';
 import QuestionReview from '../components/QuestionReview';
+import Celebration from '../components/Celebration';
 
 function ScoreRing({ score }) {
   const r = 65, c = 2 * Math.PI * r;
@@ -53,11 +54,15 @@ export default function Resultado() {
 
   return (
     <>
-      <div className="result-hero no-print">
+      {sim.approved && <Celebration chave={id} />}
+
+      <div className={`result-hero no-print${sim.approved ? ' is-win' : ''}`}>
         <ScoreRing score={sim.score} />
         <div className="result-meta">
           <span className={`badge ${sim.approved ? 'badge-ok' : 'badge-bad'}`} style={{ marginBottom: 10 }}>
-            {sim.approved ? `✓ Aprovado — atingiu os ${sim.pass_threshold}%` : `Revisar — abaixo de ${sim.pass_threshold}%`}
+            {sim.approved
+              ? <><Icons.trophy size={14} /> Meta atingida — {sim.pass_threshold}% ou mais</>
+              : `Revisar — abaixo de ${sim.pass_threshold}%`}
           </span>
           <h1>{sim.title || `Simulado #${sim.id}`}</h1>
           <div className="result-facts">

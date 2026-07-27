@@ -32,6 +32,7 @@ export default function Resultado() {
   const { id } = useParams();
   const [sim, setSim] = useState(null);
   const [error, setError] = useState('');
+  const [festa, setFesta] = useState(0);
   const refs = useRef({});
 
   useEffect(() => {
@@ -54,12 +55,18 @@ export default function Resultado() {
 
   return (
     <>
-      {sim.approved && <Celebration chave={id} />}
+      {sim.approved && <Celebration chave={id} repeticao={festa} />}
 
       <div className={`result-hero no-print${sim.approved ? ' is-win' : ''}`}>
         <ScoreRing score={sim.score} />
         <div className="result-meta">
-          <span className={`badge ${sim.approved ? 'badge-ok' : 'badge-bad'}`} style={{ marginBottom: 10 }}>
+          <span
+            className={`badge ${sim.approved ? 'badge-ok is-replay' : 'badge-bad'}`}
+            style={{ marginBottom: 10 }}
+            onClick={sim.approved ? () => setFesta(n => n + 1) : undefined}
+            title={sim.approved ? 'Clique para rever a comemoração' : undefined}
+            role={sim.approved ? 'button' : undefined}
+          >
             {sim.approved
               ? <><Icons.trophy size={14} /> Meta atingida — {sim.pass_threshold}% ou mais</>
               : `Revisar — abaixo de ${sim.pass_threshold}%`}

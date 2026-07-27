@@ -28,24 +28,27 @@ function criarPecas() {
   }));
 }
 
-export default function Celebration({ chave }) {
+export default function Celebration({ chave, repeticao = 0 }) {
   const [pecas, setPecas] = useState(null);
 
   useEffect(() => {
     // Quem prefere menos movimento não recebe animação alguma.
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
-    // Uma vez por simulado.
-    const marca = `approva_festa_${chave}`;
-    try {
-      if (localStorage.getItem(marca)) return;
-      localStorage.setItem(marca, '1');
-    } catch { /* se o navegador bloquear, apenas comemora normalmente */ }
+    // Automático: uma vez por simulado. Quando o usuário pede para rever
+    // (repeticao > 0), toca de novo sem consultar a marca.
+    if (repeticao === 0) {
+      const marca = `approva_festa_${chave}`;
+      try {
+        if (localStorage.getItem(marca)) return;
+        localStorage.setItem(marca, '1');
+      } catch { /* se o navegador bloquear, apenas comemora normalmente */ }
+    }
 
     setPecas(criarPecas());
     const t = setTimeout(() => setPecas(null), 4600); // limpa o DOM depois
     return () => clearTimeout(t);
-  }, [chave]);
+  }, [chave, repeticao]);
 
   if (!pecas) return null;
 

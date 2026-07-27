@@ -48,7 +48,9 @@ export default function Desempenho() {
 
   const pctChutes = geral.total_respondidas
     ? Math.round((geral.chutes / geral.total_respondidas) * 100) : 0;
-  const perdidoNoChute = Math.max(0, geral.aproveitamento - geral.dominio_real);
+  // Subtrair decimais em JS pode gerar cauda de dígitos (35.7 - 28.6 = 7.100000000000001),
+  // então arredondamos para uma casa, como o resto dos percentuais do app.
+  const perdidoNoChute = Math.max(0, Math.round((geral.aproveitamento - geral.dominio_real) * 10) / 10);
 
   const evoData = evolucao.map((s) => ({
     name: s.title ? (s.title.length > 12 ? s.title.slice(0, 12) + '…' : s.title) : `#${s.id}`,

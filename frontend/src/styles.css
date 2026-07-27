@@ -554,9 +554,20 @@ button { border: none; background: none; padding: 0; }
 .result-hero.is-win .badge-ok{animation:win-badge 1s ease .3s both;}
 @keyframes win-badge{0%{transform:scale(.85);opacity:0;}55%{transform:scale(1.06);opacity:1;}100%{transform:scale(1);opacity:1;}}
 
+/* Versão discreta: as peças apenas surgem e somem no lugar, sem travessia. */
+@keyframes confetti-soft{
+  0%{opacity:0;transform:translate3d(0,-6px,0) scale(.8);}
+  30%{opacity:1;transform:translate3d(0,0,0) scale(1);}
+  70%{opacity:1;}
+  100%{opacity:0;transform:translate3d(0,18px,0) scale(.9);}
+}
+.confetti.soft .confetti-piece{top:auto;animation-name:confetti-soft;animation-timing-function:ease-out;}
+
 @media (prefers-reduced-motion: reduce){
-  .confetti{display:none;}
   .result-hero.is-win,.result-hero.is-win .score-ring,.result-hero.is-win .badge-ok{animation:none;}
+  /* Exceção à regra global que zera animações: a versão discreta do confete
+     é breve e não atravessa a tela, então pode acontecer. */
+  .confetti.soft .confetti-piece{animation-duration:2s !important;}
 }
 
 /* ============ RECOMEÇAR DO ZERO (zona de risco + modal) ============ */

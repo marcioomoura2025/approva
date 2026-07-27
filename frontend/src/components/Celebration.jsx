@@ -11,15 +11,19 @@ import { useEffect, useState } from 'react';
 */
 
 const CORES = ['#d8b55c', '#b49344', '#2e7d5b', '#29456e', '#f8f8f6', '#c9a24e'];
-const QTD = 70;
 
-function criarPecas() {
-  return Array.from({ length: QTD }, (_, i) => ({
+// Duas intensidades: a festa completa e uma versão discreta para quem
+// configurou o sistema para reduzir animações (ex.: "Efeitos visuais" do
+// Windows desligado). A discreta apenas surge e desaparece, sem voar pela tela.
+function criarPecas(suave) {
+  const qtd = suave ? 28 : 70;
+  return Array.from({ length: qtd }, (_, i) => ({
     id: i,
     left: Math.random() * 100,                       // % da largura
+    top: 12 + Math.random() * 66,                    // % da altura (só na versão suave)
     cor: CORES[i % CORES.length],
-    atraso: Math.random() * 0.9,                     // s
-    duracao: 2.4 + Math.random() * 1.6,              // s
+    atraso: Math.random() * (suave ? 0.5 : 0.9),     // s
+    duracao: suave ? 1.6 + Math.random() * 0.8 : 2.4 + Math.random() * 1.6,
     deriva: (Math.random() - 0.5) * 220,             // px de deslocamento lateral
     giro: (Math.random() - 0.5) * 900,               // graus
     largura: 7 + Math.random() * 6,
@@ -32,8 +36,8 @@ export default function Celebration({ chave, repeticao = 0 }) {
   const [pecas, setPecas] = useState(null);
 
   useEffect(() => {
-    // Quem prefere menos movimento não recebe animação alguma.
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    // Sistema pedindo menos movimento → versão discreta, nunca o silêncio total.
+    const suave = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
     // Automático: uma vez por simulado. Quando o usuário pede para rever
     // (repeticao > 0), toca de novo sem consultar a marca.
@@ -45,21 +49,22 @@ export default function Celebration({ chave, repeticao = 0 }) {
       } catch { /* se o navegador bloquear, apenas comemora normalmente */ }
     }
 
-    setPecas(criarPecas());
-    const t = setTimeout(() => setPecas(null), 4600); // limpa o DOM depois
+    setPecas({ suave, itens: criarPecas(suave) });
+    const t = setTimeout(() => setPecas(null), suave ? 3000 : 4600); // limpa o DOM depois
     return () => clearTimeout(t);
   }, [chave, repeticao]);
 
   if (!pecas) return null;
 
   return (
-    <div className="confetti" aria-hidden="true">
-      {pecas.map(p => (
+    <div className={`confetti${pecas.suave ? ' soft' : ''}`} aria-hidden="true">
+      {pecas.itens.map(p => (
         <span
           key={p.id}
           className={`confetti-piece${p.redondo ? ' round' : ''}`}
           style={{
             left: `${p.left}%`,
+            ...(pecas.suave ? { top: `${p.top}%` } : null),
             background: p.cor,
             width: `${p.largura}px`,
             height: `${p.redondo ? p.largura : p.altura}px`,

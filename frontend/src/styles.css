@@ -262,8 +262,8 @@ table.data tr.is-you td:first-child{box-shadow:inset 3px 0 0 var(--gold);}
 .chute-toggle svg{transition:transform .2s;}
 .chute-toggle:hover svg{transform:rotate(-10deg) translateY(-1px);}
 .chute-toggle.active svg{animation:kick .55s ease;}
-.chute-help{font-size:12.5px;color:var(--muted);margin-top:6px;}
-.solve-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:22px;}
+.chute-help{font-size:12.5px;color:var(--muted);margin-top:10px;}
+.solve-actions{display:flex;flex-wrap:wrap;align-items:center;gap:22px;margin-top:22px;}
 .flag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;padding-top:18px;border-top:1px dashed var(--line);}
 .flag-btn{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--muted);transition:.16s;}
 .flag-btn:hover{border-color:var(--navy-600);color:var(--navy);}
@@ -558,3 +558,19 @@ button { border: none; background: none; padding: 0; }
   .confetti{display:none;}
   .result-hero.is-win,.result-hero.is-win .score-ring,.result-hero.is-win .badge-ok{animation:none;}
 }
+
+/* ============ RECOMEÇAR DO ZERO (zona de risco + modal) ============ */
+.danger-zone{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  margin-top:28px;padding:18px 22px;border:1px dashed rgba(192,72,60,.4);border-radius:var(--radius-lg);background:rgba(192,72,60,.04);}
+.danger-zone h3{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink);margin:0 0 4px;}
+.danger-zone p{margin:0;font-size:13.5px;color:var(--muted);max-width:62ch;}
+
+.modal-backdrop{position:fixed;inset:0;z-index:120;background:rgba(11,20,36,.55);backdrop-filter:blur(2px);
+  display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeUp .2s ease both;}
+.modal{width:min(480px,100%);background:var(--card);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-lg);animation:popIn .25s cubic-bezier(.34,1.4,.5,1) both;}
+.modal h3{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--ink);margin:0 0 8px;}
+.modal p{font-size:14px;color:var(--muted);margin:0 0 14px;line-height:1.6;}
+.modal .field{margin-bottom:0;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;color:var(--ink);cursor:pointer;}
+.chk input{margin-top:2px;accent-color:var(--navy);width:16px;height:16px;flex:0 0 auto;}

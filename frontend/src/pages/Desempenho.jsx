@@ -185,6 +185,69 @@ export default function Desempenho() {
           )}
         </div>
       </section>
+
+      <ResetDados />
     </>
+  );
+}
+
+/* ---------- Recomeçar do zero ---------- */
+function ResetDados() {
+  const [aberto, setAberto] = useState(false);
+  const [texto, setTexto] = useState('');
+  const [marcacoes, setMarcacoes] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState('');
+
+  const fechar = () => { setAberto(false); setTexto(''); setMarcacoes(false); setErro(''); };
+
+  const apagar = async () => {
+    setBusy(true); setErro('');
+    try {
+      await api('/me/dados', { method: 'DELETE', body: { confirmar: 'APAGAR', marcacoes } });
+      location.href = '/'; // recarrega já com tudo zerado
+    } catch (e) { setErro(e.message); setBusy(false); }
+  };
+
+  return (
+    <section className="danger-zone">
+      <div>
+        <h3>Recomeçar do zero</h3>
+        <p>Apaga seus simulados e respostas, zerando estatísticas, ranking e revisão programada. O banco de questões não é afetado, e as outras contas também não.</p>
+      </div>
+      <button className="btn btn-danger btn-sm" onClick={() => setAberto(true)}>
+        <Icons.trash /> Apagar meu histórico
+      </button>
+
+      {aberto && (
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) fechar(); }}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="ttl-reset">
+            <h3 id="ttl-reset">Apagar seu histórico?</h3>
+            <p>Serão apagados <strong>todos os seus simulados e respostas</strong>. Isto <strong>não pode ser desfeito</strong>.</p>
+
+            <label className="chk">
+              <input type="checkbox" checked={marcacoes} onChange={e => setMarcacoes(e.target.checked)} />
+              <span>Apagar também favoritos, marcações de revisão e anotações</span>
+            </label>
+
+            <div className="field" style={{ marginTop: 14 }}>
+              <label htmlFor="conf">Para confirmar, digite <strong>APAGAR</strong></label>
+              <input id="conf" value={texto} autoFocus autoComplete="off"
+                onChange={e => setTexto(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Escape') fechar(); }} />
+            </div>
+
+            {erro && <div className="alert alert-error" style={{ marginTop: 12 }}>{erro}</div>}
+
+            <div className="modal-actions">
+              <button className="btn btn-ghost btn-sm" onClick={fechar} disabled={busy}>Cancelar</button>
+              <button className="btn btn-danger btn-sm" disabled={texto !== 'APAGAR' || busy} onClick={apagar}>
+                {busy ? 'Apagando…' : 'Apagar definitivamente'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

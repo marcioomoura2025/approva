@@ -56,6 +56,37 @@ router.put('/me/meta', auth, async (req, res) => {
   res.json({ pass_threshold: v });
 });
 
+// Apaga o histórico de desempenho do próprio usuário (recomeçar do zero).
+// O banco de questões NÃO é tocado — só os dados de estudo desta conta.
+router.delete('/me/dados', auth, async (req, res) => {
+  if (req.body?.confirmar !== 'APAGAR') {
+    return res.status(400).json({ error: 'Confirmação inválida.' });
+  }
+  const uid = req.user.id;
+  const apagarMarcacoes = req.body?.marcacoes === true;
+
+  const antes = await get(
+    `SELECT (SELECT COUNT(*) FROM simulados WHERE user_id = ?) AS simulados,
+            (SELECT COUNT(*) FROM answers   WHERE user_id = ?) AS respostas,
+            (SELECT COUNT(*) FROM user_question_state WHERE user_id = ?) AS marcacoes`,
+    [uid, uid, uid]);
+
+  // Ordem importa: filhos primeiro, para não deixar registros órfãos.
+  await run('DELETE FROM answers WHERE user_id = ?', [uid]);
+  await run('DELETE FROM simulado_questions WHERE simulado_id IN (SELECT id FROM simulados WHERE user_id = ?)', [uid]);
+  await run('DELETE FROM simulados WHERE user_id = ?', [uid]);
+  if (apagarMarcacoes) await run('DELETE FROM user_question_state WHERE user_id = ?', [uid]);
+
+  res.json({
+    ok: true,
+    apagados: {
+      simulados: antes?.simulados || 0,
+      respostas: antes?.respostas || 0,
+      marcacoes: apagarMarcacoes ? (antes?.marcacoes || 0) : 0,
+    },
+  });
+});
+
 // ---------- Gestão de usuários (admin) ----------
 
 // Lista os usuários cadastrados.

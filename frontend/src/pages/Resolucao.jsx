@@ -262,17 +262,17 @@ export default function Resolucao() {
         </div>
 
         {!q.answered && (
-          <div className="solve-actions">
-            <button className="btn btn-gold" onClick={() => submit()} disabled={selected === null || busy}>
-              {busy ? 'Registrando…' : 'Responder'}
-            </button>
-            <div>
+          <>
+            <div className="solve-actions">
+              <button className="btn btn-gold" onClick={() => submit()} disabled={selected === null || busy}>
+                {busy ? 'Registrando…' : 'Responder'}
+              </button>
               <button type="button" className={`chute-toggle ${chute ? 'active' : ''}`} onClick={() => setChute(c => !c)} aria-pressed={chute}>
                 <Icons.foot size={17} /> {chute ? 'Estou chutando' : 'Marcar como chute'}
               </button>
-              <div className="chute-help">Respondeu na sorte? Marque: mesmo se acertar, o tópico entra na sua lista de estudo.</div>
             </div>
-          </div>
+            <div className="chute-help">Respondeu na sorte? Marque: mesmo se acertar, o tópico entra na sua lista de estudo.</div>
+          </>
         )}
 
         {q.answered && !revealed && (

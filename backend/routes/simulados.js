@@ -3,6 +3,9 @@ const { all, get, run } = require('../db');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
+
+const NIVEIS = ['facil', 'media', 'dificil'];
+const ROTULO = { facil: 'Fácil', media: 'Média', dificil: 'Difícil' };
 const DEFAULT_PASS = Number(process.env.PASS_THRESHOLD || 60);
 // Meta pessoal do usuário (fallback para o padrão do sistema)
 const passOf = (user) => Number(user?.pass_threshold || DEFAULT_PASS);
@@ -35,6 +38,9 @@ router.post('/simulados', auth, async (req, res) => {
   if (b.ano) { extraWhere.push('q.ano = ?'); extraArgs.push(b.ano); }
   if (b.orgao) { extraWhere.push('q.orgao = ?'); extraArgs.push(b.orgao); }
   if (b.cargo) { extraWhere.push('q.cargo = ?'); extraArgs.push(b.cargo); }
+  if (['facil', 'media', 'dificil'].includes(b.dificuldade)) {
+    extraWhere.push('q.difficulty = ?'); extraArgs.push(b.dificuldade);
+  }
 
   if (b.mode === 'prova') {
     // Prova inteira: identificada por banca|ano|órgão|cargo|caderno.
@@ -87,12 +93,47 @@ router.post('/simulados', auth, async (req, res) => {
       args.push(...b.subject_ids);
     }
     const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
-    const rows = await all(`
-      SELECT q.id FROM questions q JOIN topics t ON t.id = q.topic_id
-      ${whereSql} ORDER BY RANDOM() LIMIT ?`, [...args, qty]);
-    if (!rows.length) return res.status(400).json({ error: 'Nenhuma questão encontrada com esses filtros. Ajuste os critérios.' });
-    if (rows.length < qty) warnings.push(`Pedidas ${qty} questões, mas só ${rows.length} disponíveis com esses filtros.`);
-    questionIds = rows.map(r => r.id);
+
+    // Distribuição por dificuldade (ex.: 30% fácil, 40% média, 30% difícil).
+    const dist = b.distribuicao && typeof b.distribuicao === 'object' ? b.distribuicao : null;
+    const pesos = dist ? NIVEIS.map(n => Math.max(0, Number(dist[n]) || 0)) : null;
+    const somaPesos = pesos ? pesos.reduce((a, v) => a + v, 0) : 0;
+
+    if (pesos && somaPesos > 0) {
+      // Converte percentuais em quantidades inteiras que somam exatamente `qty`
+      // (método do maior resto — evita perder ou criar questões no arredondamento).
+      const exatos = pesos.map(p => (p / somaPesos) * qty);
+      const cotas = exatos.map(Math.floor);
+      let sobra = qty - cotas.reduce((a, v) => a + v, 0);
+      const porResto = exatos
+        .map((v, i) => ({ i, resto: v - Math.floor(v) }))
+        .sort((a, b) => b.resto - a.resto);
+      for (let k = 0; sobra > 0; k++, sobra--) cotas[porResto[k % NIVEIS.length].i]++;
+
+      for (let i = 0; i < NIVEIS.length; i++) {
+        const nivel = NIVEIS[i];
+        const cota = cotas[i];
+        if (!cota) continue;
+        const cond = [...where, 'q.difficulty = ?'];
+        const rows = await all(`
+          SELECT q.id FROM questions q JOIN topics t ON t.id = q.topic_id
+          WHERE ${cond.join(' AND ')} ORDER BY RANDOM() LIMIT ?`, [...args, nivel, cota]);
+        if (rows.length < cota) {
+          warnings.push(`Nível ${ROTULO[nivel]}: pedidas ${cota} questões, mas só ${rows.length} disponíveis com esses filtros.`);
+        }
+        questionIds.push(...rows.map(r => r.id));
+      }
+      if (!questionIds.length) {
+        return res.status(400).json({ error: 'Nenhuma questão encontrada para a distribuição escolhida. Ajuste os critérios.' });
+      }
+    } else {
+      const rows = await all(`
+        SELECT q.id FROM questions q JOIN topics t ON t.id = q.topic_id
+        ${whereSql} ORDER BY RANDOM() LIMIT ?`, [...args, qty]);
+      if (!rows.length) return res.status(400).json({ error: 'Nenhuma questão encontrada com esses filtros. Ajuste os critérios.' });
+      if (rows.length < qty) warnings.push(`Pedidas ${qty} questões, mas só ${rows.length} disponíveis com esses filtros.`);
+      questionIds = rows.map(r => r.id);
+    }
   }
 
   if (!questionIds.length) return res.status(400).json({ error: 'Nenhuma questão disponível para montar o simulado.' });

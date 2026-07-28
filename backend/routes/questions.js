@@ -47,19 +47,23 @@ router.get('/questoes', auth, async (req, res) => {
 
 // Valores distintos para popular os filtros da interface.
 router.get('/questoes/filtros', auth, async (_req, res) => {
-  const [bancas, anos, orgaos, cargos, provas] = await Promise.all([
+  const [bancas, anos, orgaos, cargos, provas, dificuldades] = await Promise.all([
     all(`SELECT DISTINCT banca AS v FROM questions WHERE banca IS NOT NULL AND banca != '' ORDER BY v`),
     all(`SELECT DISTINCT ano AS v FROM questions WHERE ano IS NOT NULL ORDER BY v DESC`),
     all(`SELECT DISTINCT orgao AS v FROM questions WHERE orgao IS NOT NULL AND orgao != '' ORDER BY v`),
     all(`SELECT DISTINCT cargo AS v FROM questions WHERE cargo IS NOT NULL AND cargo != '' ORDER BY v`),
     all(`SELECT DISTINCT prova AS v FROM questions WHERE prova IS NOT NULL AND prova != '' ORDER BY v`),
+    all(`SELECT difficulty AS v, COUNT(*) AS n FROM questions GROUP BY difficulty`),
   ]);
+  const porNivel = { facil: 0, media: 0, dificil: 0 };
+  for (const r of dificuldades) if (r.v in porNivel) porNivel[r.v] = Number(r.n);
   res.json({
     bancas: bancas.map(r => r.v),
     anos: anos.map(r => Number(r.v)),
     orgaos: orgaos.map(r => r.v),
     cargos: cargos.map(r => r.v),
     provas: provas.map(r => r.v),
+    dificuldades: porNivel,
   });
 });
 

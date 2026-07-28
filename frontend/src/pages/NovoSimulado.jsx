@@ -7,7 +7,7 @@ import ContentPicker from '../components/ContentPicker';
 export default function NovoSimulado() {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState(null);
-  const [filters, setFilters] = useState({ bancas: [], anos: [], orgaos: [], cargos: [] });
+  const [filters, setFilters] = useState({ bancas: [], anos: [], orgaos: [], cargos: [], dificuldades: {} });
   const [provas, setProvas] = useState([]);
   const [buscaProva, setBuscaProva] = useState('');
   const [provaChave, setProvaChave] = useState('');
@@ -25,6 +25,9 @@ export default function NovoSimulado() {
   const [ano, setAno] = useState('');
   const [orgao, setOrgao] = useState('');
   const [cargo, setCargo] = useState('');
+  const [dificuldade, setDificuldade] = useState('');
+  const [usarDistribuicao, setUsarDistribuicao] = useState(false);
+  const [dist, setDist] = useState({ facil: 30, media: 40, dificil: 30 });
 
   // Configurações
   const [feedbackMode, setFeedbackMode] = useState('final');
@@ -37,6 +40,22 @@ export default function NovoSimulado() {
       .then(([m, f, p]) => { setSubjects(m); setFilters(f); setProvas(p); })
       .catch(e => setError(e.message));
   }, []);
+
+  // Prévia de quantas questões cairão em cada nível — espelha o cálculo do
+  // servidor (método do maior resto) para o usuário ver antes de criar.
+  const cotas = useMemo(() => {
+    const niveis = ['facil', 'media', 'dificil'];
+    const pesos = niveis.map(n => Math.max(0, Number(dist[n]) || 0));
+    const soma = pesos.reduce((a, v) => a + v, 0);
+    const qtd = Math.max(0, Number(quantity) || 0);
+    if (!soma || !qtd) return { facil: 0, media: 0, dificil: 0, soma };
+    const exatos = pesos.map(p => (p / soma) * qtd);
+    const base = exatos.map(Math.floor);
+    let sobra = qtd - base.reduce((a, v) => a + v, 0);
+    const ordem = exatos.map((v, i) => ({ i, r: v - Math.floor(v) })).sort((a, b) => b.r - a.r);
+    for (let k = 0; sobra > 0; k++, sobra--) base[ordem[k % 3].i]++;
+    return { facil: base[0], media: base[1], dificil: base[2], soma };
+  }, [dist, quantity]);
 
   // Provas aplicadas, filtradas pela busca do usuário.
   const provasFiltradas = useMemo(() => {
@@ -57,6 +76,7 @@ export default function NovoSimulado() {
       ano: ano || undefined,
       orgao: orgao || undefined,
       cargo: cargo || undefined,
+      dificuldade: dificuldade || undefined,
       feedback_mode: feedbackMode,
       time_mode: timeMode,
       total_seconds: timeMode === 'total' ? Math.round(Number(totalMinutes) * 60) : undefined,
@@ -76,6 +96,9 @@ export default function NovoSimulado() {
     return {
       ...base, mode: 'simples', quantity: Number(quantity),
       topic_ids: selTopics.length ? selTopics : undefined,
+      // A distribuição substitui o filtro de nível único.
+      dificuldade: usarDistribuicao ? undefined : (dificuldade || undefined),
+      distribuicao: usarDistribuicao ? dist : undefined,
     };
   };
 
@@ -167,6 +190,46 @@ export default function NovoSimulado() {
               <label>Quantidade de questões</label>
               <input type="number" min="1" max="200" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ maxWidth: 140 }} />
             </div>
+
+            <div className="field">
+              <label className="chk" style={{ maxWidth: 'fit-content' }}>
+                <input type="checkbox" checked={usarDistribuicao} onChange={e => setUsarDistribuicao(e.target.checked)} />
+                <span>Distribuir por nível de dificuldade</span>
+              </label>
+
+              {usarDistribuicao && (
+                <div className="dist-box">
+                  <div className="dist-grid">
+                    {[
+                      ['facil', 'Fácil', 'ok'],
+                      ['media', 'Média', 'gold'],
+                      ['dificil', 'Difícil', 'bad'],
+                    ].map(([k, rotulo, tom]) => (
+                      <div className={`dist-item ${tom}`} key={k}>
+                        <label htmlFor={`d-${k}`}>{rotulo}</label>
+                        <div className="dist-input">
+                          <input id={`d-${k}`} type="number" min="0" max="100" value={dist[k]}
+                            onChange={e => setDist(d => ({ ...d, [k]: e.target.value }))} />
+                          <span>%</span>
+                        </div>
+                        <div className="dist-cota">{cotas[k]} questão(ões)</div>
+                        <div className="dist-estoque">{filters.dificuldades?.[k] ?? 0} no banco</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {cotas.soma !== 100 && cotas.soma > 0 && (
+                    <p className="dist-aviso">
+                      Os percentuais somam <strong>{cotas.soma}%</strong>. Tudo bem — eles serão usados como proporção
+                      (a soma não precisa dar 100).
+                    </p>
+                  )}
+                  {cotas.soma === 0 && (
+                    <p className="dist-aviso erro">Informe ao menos um percentual maior que zero.</p>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="field">
               <label>Conteúdo <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional — vazio = todas as matérias)</span></label>
               <ContentPicker subjects={subjects} selecionados={selTopics} onChange={setSelTopics} />
@@ -221,6 +284,16 @@ export default function NovoSimulado() {
                 <option value="">Todos</option>
                 {(filters.cargos || []).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+            </div>
+            <div className="field">
+              <label>Dificuldade <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional)</span></label>
+              <select value={dificuldade} onChange={e => setDificuldade(e.target.value)} disabled={usarDistribuicao}>
+                <option value="">Todas</option>
+                <option value="facil">Fácil ({filters.dificuldades?.facil ?? 0})</option>
+                <option value="media">Média ({filters.dificuldades?.media ?? 0})</option>
+                <option value="dificil">Difícil ({filters.dificuldades?.dificil ?? 0})</option>
+              </select>
+              {usarDistribuicao && <div className="hint">Desativado: a distribuição por nível está ativa.</div>}
             </div>
           </div>
         )}

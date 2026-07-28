@@ -668,3 +668,15 @@ button { border: none; background: none; padding: 0; }
 .dist-aviso{margin:12px 0 0;font-size:13px;color:var(--muted);}
 .dist-aviso.erro{color:var(--bad);}
 @media (max-width:640px){ .dist-grid{grid-template-columns:1fr;} }
+
+/* Faixa com o tamanho do banco de questões (Painel) */
+.bank-strip{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-top:14px;padding:12px 18px;border:1px solid var(--line);border-radius:14px;
+  background:linear-gradient(160deg,#fffdf7,#fbfaf6);}
+.bank-strip .bs-label{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);
+  font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+.bank-strip .bs-label svg{color:var(--gold);}
+.bank-strip .bs-items{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted);}
+.bank-strip .bs-item strong{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--ink);margin-right:4px;}
+.bank-strip .bs-sep{color:var(--line);}
+@media (max-width:520px){ .bank-strip{flex-direction:column;align-items:flex-start;gap:8px;} }

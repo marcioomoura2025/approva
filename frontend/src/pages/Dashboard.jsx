@@ -15,14 +15,16 @@ export default function Dashboard() {
       api('/stats/dificuldades'),
       api('/simulados'),
       api('/revisao-programada/resumo'),
-    ]).then(([geral, dificuldades, simulados, revisao]) => {
-      setData({ geral, dificuldades, simulados: simulados.slice(0, 5), revisao });
+      api('/banco/resumo'),
+    ]).then(([geral, dificuldades, simulados, revisao, banco]) => {
+      setData({ geral, dificuldades, simulados: simulados.slice(0, 5), revisao, banco });
     }).catch(e => setError(e.message));
   }, []);
 
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!data) return <Spinner />;
-  const { geral, dificuldades, simulados, revisao } = data;
+  const { geral, dificuldades, simulados, revisao, banco } = data;
+  const num = (n) => Number(n || 0).toLocaleString('pt-BR');
   const firstName = (user?.name || '').split(' ')[0];
   const meta = user?.pass_threshold ?? 60;
 
@@ -57,6 +59,17 @@ export default function Dashboard() {
         <StatCard icon="clock" label="Tempo por questão" value={fmtTime(geral.tempo_medio_questao)}
           foot="média entre todas as respostas" />
       </div>
+
+      <section className="bank-strip">
+        <span className="bs-label"><Icons.db size={16} /> Banco de questões</span>
+        <span className="bs-items">
+          <span className="bs-item"><strong>{num(banco.questoes)}</strong> questões</span>
+          <span className="bs-sep" aria-hidden="true">·</span>
+          <span className="bs-item"><strong>{num(banco.provas)}</strong> {banco.provas === 1 ? 'prova completa' : 'provas completas'}</span>
+          <span className="bs-sep" aria-hidden="true">·</span>
+          <span className="bs-item"><strong>{num(banco.materias)}</strong> {banco.materias === 1 ? 'matéria' : 'matérias'}</span>
+        </span>
+      </section>
 
       <div className="grid" style={{ marginTop: 18 }}>
         <section className="card hoverable">

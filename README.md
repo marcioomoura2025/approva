@@ -85,6 +85,7 @@ git push -u origin main
 - **Revisões** — abas: marcadas p/ revisão · favoritas · erros & chutes (montado automaticamente).
 - **Revisão programada (repetição espaçada)** — o app calcula, a partir do histórico, quando revisar cada tópico e avisa quando a data chega: errou → 2 dias, acertou no chute → 3, acertou → 7, domínio consolidado → 16. Um card no Painel e uma tela dedicada listam os tópicos vencidos e montam a revisão com um clique (uma questão por tópico, até 20 por sessão). Quando nada venceu, a tela mostra *quando* cada tópico volta, em vez de parecer vazia.
 - **Recomeçar do zero** — na tela de Desempenho, o usuário pode apagar o próprio histórico (simulados e respostas), zerando estatísticas, ranking e revisão programada. Exige confirmação digitada, oferece apagar também favoritos/marcações e não toca no banco de questões nem nas outras contas.
+- **Resumo do banco no Painel** — faixa com o total de questões, provas completas e matérias disponíveis.
 - **Comemoração de meta** — ao finalizar um simulado atingindo a própria meta, o resultado ganha confete e um destaque dourado. Toca uma vez por simulado (revisitar não repete) e respeita `prefers-reduced-motion`.
 - **Meta de aprovação pessoal** — cada usuário define seu % mínimo (chip editável no Painel e no Desempenho); o "Aprovado" do resultado e os selos verde/vermelho seguem essa meta.
 - **Estatísticas** — aproveitamento vs **domínio real**, por matéria e tópico, pontos fracos, evolução, tempo médio.

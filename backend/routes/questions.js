@@ -67,6 +67,26 @@ router.get('/questoes/filtros', auth, async (_req, res) => {
   });
 });
 
+// Resumo do banco para o Painel — só contagens, sem trazer listas.
+router.get('/banco/resumo', auth, async (_req, res) => {
+  const r = await get(`
+    SELECT
+      (SELECT COUNT(*) FROM questions) AS questoes,
+      (SELECT COUNT(*) FROM subjects)  AS materias,
+      (SELECT COUNT(*) FROM topics)    AS topicos,
+      (SELECT COUNT(*) FROM (
+         SELECT 1 FROM questions
+         WHERE orgao IS NOT NULL AND orgao != '' AND cargo IS NOT NULL AND cargo != ''
+         GROUP BY banca, ano, orgao, cargo, prova
+       )) AS provas`);
+  res.json({
+    questoes: Number(r?.questoes || 0),
+    provas: Number(r?.provas || 0),
+    materias: Number(r?.materias || 0),
+    topicos: Number(r?.topicos || 0),
+  });
+});
+
 // Provas aplicadas: cada combinação de banca + ano + órgão + cargo (+ caderno)
 // representa uma prova real. Serve para montar o simulado "prova inteira".
 router.get('/provas', auth, async (_req, res) => {

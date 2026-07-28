@@ -47,18 +47,47 @@ router.get('/questoes', auth, async (req, res) => {
 
 // Valores distintos para popular os filtros da interface.
 router.get('/questoes/filtros', auth, async (_req, res) => {
-  const [bancas, anos, orgaos, cargos] = await Promise.all([
+  const [bancas, anos, orgaos, cargos, provas] = await Promise.all([
     all(`SELECT DISTINCT banca AS v FROM questions WHERE banca IS NOT NULL AND banca != '' ORDER BY v`),
     all(`SELECT DISTINCT ano AS v FROM questions WHERE ano IS NOT NULL ORDER BY v DESC`),
     all(`SELECT DISTINCT orgao AS v FROM questions WHERE orgao IS NOT NULL AND orgao != '' ORDER BY v`),
     all(`SELECT DISTINCT cargo AS v FROM questions WHERE cargo IS NOT NULL AND cargo != '' ORDER BY v`),
+    all(`SELECT DISTINCT prova AS v FROM questions WHERE prova IS NOT NULL AND prova != '' ORDER BY v`),
   ]);
   res.json({
     bancas: bancas.map(r => r.v),
     anos: anos.map(r => Number(r.v)),
     orgaos: orgaos.map(r => r.v),
     cargos: cargos.map(r => r.v),
+    provas: provas.map(r => r.v),
   });
+});
+
+// Provas aplicadas: cada combinação de banca + ano + órgão + cargo (+ caderno)
+// representa uma prova real. Serve para montar o simulado "prova inteira".
+router.get('/provas', auth, async (_req, res) => {
+  const rows = await all(`
+    SELECT q.banca, q.ano, q.orgao, q.cargo, q.prova,
+           COUNT(*) AS total,
+           COUNT(DISTINCT t.subject_id) AS materias
+    FROM questions q
+    JOIN topics t ON t.id = q.topic_id
+    WHERE q.orgao IS NOT NULL AND q.orgao != '' AND q.cargo IS NOT NULL AND q.cargo != ''
+    GROUP BY q.banca, q.ano, q.orgao, q.cargo, q.prova
+    HAVING total > 0
+    ORDER BY q.ano DESC, q.orgao, q.cargo, q.prova`);
+
+  res.json(rows.map(r => ({
+    // chave estável para o front devolver na criação do simulado
+    chave: [r.banca || '', r.ano || '', r.orgao || '', r.cargo || '', r.prova || ''].join('|'),
+    banca: r.banca || null,
+    ano: r.ano != null ? Number(r.ano) : null,
+    orgao: r.orgao,
+    cargo: r.cargo,
+    prova: r.prova || null,
+    total: Number(r.total),
+    materias: Number(r.materias),
+  })));
 });
 
 function validateQuestionBody(body) {
@@ -84,11 +113,11 @@ router.post('/questoes', auth, adminOnly, async (req, res) => {
     if (!p) return res.status(404).json({ error: 'Texto-base não encontrado.' });
   }
   const { lastId } = await run(`
-    INSERT INTO questions (topic_id, passage_id, statement, options, correct_index, comment, difficulty, banca, ano, orgao, cargo, nivel, image_url, video_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    INSERT INTO questions (topic_id, passage_id, statement, options, correct_index, comment, difficulty, banca, ano, orgao, cargo, nivel, prova, image_url, video_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [b.topic_id, b.passage_id || null, String(b.statement).trim(), JSON.stringify(b.options.map(o => String(o).trim())),
      Number(b.correct_index), b.comment || null, b.difficulty || 'media', b.banca || null, b.ano || null,
-     b.orgao || null, b.cargo || null, b.nivel || null, b.image_url || null, b.video_url || null]);
+     b.orgao || null, b.cargo || null, b.nivel || null, b.prova || null, b.image_url || null, b.video_url || null]);
   res.status(201).json(parseOptions(await get('SELECT * FROM questions WHERE id = ?', [lastId])));
 });
 
@@ -106,11 +135,11 @@ router.put('/questoes/:id', auth, adminOnly, async (req, res) => {
   const b = req.body;
   await run(`
     UPDATE questions SET topic_id = ?, passage_id = ?, statement = ?, options = ?, correct_index = ?, comment = ?,
-      difficulty = ?, banca = ?, ano = ?, orgao = ?, cargo = ?, nivel = ?, image_url = ?, video_url = ?
+      difficulty = ?, banca = ?, ano = ?, orgao = ?, cargo = ?, nivel = ?, prova = ?, image_url = ?, video_url = ?
     WHERE id = ?`,
     [b.topic_id, b.passage_id || null, String(b.statement).trim(), JSON.stringify(b.options.map(o => String(o).trim())),
      Number(b.correct_index), b.comment || null, b.difficulty || 'media', b.banca || null, b.ano || null,
-     b.orgao || null, b.cargo || null, b.nivel || null, b.image_url || null, b.video_url || null, req.params.id]);
+     b.orgao || null, b.cargo || null, b.nivel || null, b.prova || null, b.image_url || null, b.video_url || null, req.params.id]);
   res.json(parseOptions(await get('SELECT * FROM questions WHERE id = ?', [req.params.id])));
 });
 

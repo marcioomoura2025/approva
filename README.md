@@ -79,6 +79,8 @@ git push -u origin main
 - **Tempo** — livre, total da prova (auto-finaliza) ou por questão (esgotou = erro, avança sozinho, sem voltar).
 - **Chute 🎲** — marque quando responder na sorte; acerto no chute não conta como domínio e a questão entra no caderno de erros & chutes.
 - **Interações** — favoritar, marcar para revisão, anotações pessoais por questão.
+- **Prova inteira** — aplica uma prova real já cadastrada (banca + ano + órgão + cargo + caderno), com todas as questões na ordem original. A coluna `prova` da planilha separa cadernos diferentes do mesmo concurso (ex.: "Prova 2").
+- **Seleção de conteúdo compacta** — busca por matéria/tópico com lista recolhível, no lugar das antigas listas de pastilhas que cresciam sem limite.
 - **Revisões** — abas: marcadas p/ revisão · favoritas · erros & chutes (montado automaticamente).
 - **Revisão programada (repetição espaçada)** — o app calcula, a partir do histórico, quando revisar cada tópico e avisa quando a data chega: errou → 2 dias, acertou no chute → 3, acertou → 7, domínio consolidado → 16. Um card no Painel e uma tela dedicada listam os tópicos vencidos e montam a revisão com um clique (uma questão por tópico, até 20 por sessão).
 - **Recomeçar do zero** — na tela de Desempenho, o usuário pode apagar o próprio histórico (simulados e respostas), zerando estatísticas, ranking e revisão programada. Exige confirmação digitada, oferece apagar também favoritos/marcações e não toca no banco de questões nem nas outras contas.

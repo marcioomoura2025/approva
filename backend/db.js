@@ -124,6 +124,9 @@ async function init() {
   for (const sql of stmts) await db.execute(sql);
   // Migração: meta de aprovação definida pelo usuário (coluna nova em bases antigas)
   try { await db.execute('ALTER TABLE users ADD COLUMN pass_threshold INTEGER'); } catch { /* já existe */ }
+  // Identifica a prova aplicada quando um mesmo concurso tem mais de um caderno
+  // (ex.: "Prova 2"). Vazio = o concurso tem prova única.
+  try { await db.execute('ALTER TABLE questions ADD COLUMN prova TEXT'); } catch { /* já existe */ }
 
 }
 

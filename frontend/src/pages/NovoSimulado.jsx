@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { PageHead, Spinner, Icons } from '../components/UI';
+import ContentPicker from '../components/ContentPicker';
 
 export default function NovoSimulado() {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState(null);
-  const [filters, setFilters] = useState({ bancas: [], anos: [] });
+  const [filters, setFilters] = useState({ bancas: [], anos: [], orgaos: [], cargos: [] });
+  const [provas, setProvas] = useState([]);
+  const [buscaProva, setBuscaProva] = useState('');
+  const [provaChave, setProvaChave] = useState('');
   const [error, setError] = useState('');
   const [warnings, setWarnings] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -15,11 +19,12 @@ export default function NovoSimulado() {
   const [mode, setMode] = useState('simples');
   const [title, setTitle] = useState('');
   const [quantity, setQuantity] = useState(10);
-  const [selSubjects, setSelSubjects] = useState([]); // ids (modo simples)
-  const [selTopics, setSelTopics] = useState([]);     // ids (modo simples)
+  const [selTopics, setSelTopics] = useState([]);     // ids de tópicos (modo simples)
   const [composition, setComposition] = useState({}); // {subjectId: qty} (modo composto)
   const [banca, setBanca] = useState('');
   const [ano, setAno] = useState('');
+  const [orgao, setOrgao] = useState('');
+  const [cargo, setCargo] = useState('');
 
   // Configurações
   const [feedbackMode, setFeedbackMode] = useState('final');
@@ -28,19 +33,20 @@ export default function NovoSimulado() {
   const [secondsPerQuestion, setSecondsPerQuestion] = useState(90);
 
   useEffect(() => {
-    Promise.all([api('/materias'), api('/questoes/filtros')])
-      .then(([m, f]) => { setSubjects(m); setFilters(f); })
+    Promise.all([api('/materias'), api('/questoes/filtros'), api('/provas')])
+      .then(([m, f, p]) => { setSubjects(m); setFilters(f); setProvas(p); })
       .catch(e => setError(e.message));
   }, []);
 
-  const toggleIn = (list, setList, id) =>
-    setList(l => (l.includes(id) ? l.filter(x => x !== id) : [...l, id]));
-
-  const visibleTopics = useMemo(() => {
-    if (!subjects) return [];
-    const pool = selSubjects.length ? subjects.filter(s => selSubjects.includes(s.id)) : subjects;
-    return pool.flatMap(s => s.topics.map(t => ({ ...t, subject: s.name })));
-  }, [subjects, selSubjects]);
+  // Provas aplicadas, filtradas pela busca do usuário.
+  const provasFiltradas = useMemo(() => {
+    const t = buscaProva.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (!t) return provas;
+    return provas.filter(p =>
+      [p.orgao, p.cargo, p.banca, p.prova, p.ano].filter(Boolean).join(' ')
+        .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(t));
+  }, [provas, buscaProva]);
 
   const compTotal = Object.values(composition).reduce((a, v) => a + (Number(v) || 0), 0);
 
@@ -49,11 +55,16 @@ export default function NovoSimulado() {
       title: title.trim() || undefined,
       banca: banca || undefined,
       ano: ano || undefined,
+      orgao: orgao || undefined,
+      cargo: cargo || undefined,
       feedback_mode: feedbackMode,
       time_mode: timeMode,
       total_seconds: timeMode === 'total' ? Math.round(Number(totalMinutes) * 60) : undefined,
       seconds_per_question: timeMode === 'questao' ? Number(secondsPerQuestion) : undefined,
     };
+    if (mode === 'prova') {
+      return { ...base, mode: 'prova', prova_chave: provaChave, banca: undefined, ano: undefined, orgao: undefined, cargo: undefined };
+    }
     if (mode === 'composto') {
       return {
         ...base, mode: 'composto',
@@ -65,7 +76,6 @@ export default function NovoSimulado() {
     return {
       ...base, mode: 'simples', quantity: Number(quantity),
       topic_ids: selTopics.length ? selTopics : undefined,
-      subject_ids: !selTopics.length && selSubjects.length ? selSubjects : undefined,
     };
   };
 
@@ -112,35 +122,54 @@ export default function NovoSimulado() {
             <div className="mo-title">Composição por matéria</div>
             <div className="mo-desc">Defina quantas questões de cada disciplina — como na prova real do seu edital.</div>
           </button>
+          <button type="button" className={`mode-option ${mode === 'prova' ? 'active' : ''}`} onClick={() => setMode('prova')}>
+            <div className="mo-title">Prova inteira</div>
+            <div className="mo-desc">Aplique uma prova real já cadastrada, com todas as questões na ordem original.</div>
+          </button>
         </div>
 
-        {mode === 'simples' ? (
+        {mode === 'prova' ? (
+          <div className="provas-wrap">
+            {provas.length === 0 ? (
+              <div className="alert alert-info">
+                <Icons.fileText size={16} />
+                <span>Nenhuma prova completa identificada ainda. As provas aparecem aqui quando as questões têm <strong>órgão</strong> e <strong>cargo</strong> preenchidos — use a coluna <code>prova</code> da planilha para separar cadernos diferentes do mesmo concurso.</span>
+              </div>
+            ) : (
+              <>
+                <div className="picker-top">
+                  <div className="picker-search">
+                    <Icons.search size={16} />
+                    <input type="search" value={buscaProva} placeholder="Buscar por órgão, cargo, banca ou ano…"
+                      onChange={e => setBuscaProva(e.target.value)} aria-label="Buscar prova" />
+                  </div>
+                </div>
+                <div className="prova-list">
+                  {provasFiltradas.length === 0 && <div className="picker-empty">Nenhuma prova encontrada.</div>}
+                  {provasFiltradas.map(p => (
+                    <label className={`prova-row ${provaChave === p.chave ? 'on' : ''}`} key={p.chave}>
+                      <input type="radio" name="prova" checked={provaChave === p.chave}
+                        onChange={() => setProvaChave(p.chave)} />
+                      <span className="pr-main">
+                        <span className="pr-cargo">{p.cargo}{p.prova ? ` · ${p.prova}` : ''}</span>
+                        <span className="pr-orgao">{p.orgao}{p.banca ? ` · ${p.banca}` : ''}{p.ano ? ` · ${p.ano}` : ''}</span>
+                      </span>
+                      <span className="pr-meta">{p.total} questões · {p.materias} matéria(s)</span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : mode === 'simples' ? (
           <>
             <div className="field">
               <label>Quantidade de questões</label>
               <input type="number" min="1" max="200" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ maxWidth: 140 }} />
             </div>
             <div className="field">
-              <label>Matérias <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional — vazio = todas)</span></label>
-              <div className="chip-list">
-                {subjects.map(s => (
-                  <button type="button" key={s.id} className={`chip ${selSubjects.includes(s.id) ? 'active' : ''}`}
-                    onClick={() => { toggleIn(selSubjects, setSelSubjects, s.id); setSelTopics([]); }}>
-                    {s.name} · {s.question_count}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="field">
-              <label>Tópicos específicos <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional — sobrepõe as matérias)</span></label>
-              <div className="chip-list">
-                {visibleTopics.map(t => (
-                  <button type="button" key={t.id} className={`chip ${selTopics.includes(t.id) ? 'active' : ''}`}
-                    onClick={() => toggleIn(selTopics, setSelTopics, t.id)}>
-                    {t.name} · {t.question_count}
-                  </button>
-                ))}
-              </div>
+              <label>Conteúdo <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional — vazio = todas as matérias)</span></label>
+              <ContentPicker subjects={subjects} selecionados={selTopics} onChange={setSelTopics} />
             </div>
           </>
         ) : (
@@ -163,22 +192,38 @@ export default function NovoSimulado() {
           </div>
         )}
 
-        <div className="grid grid-2" style={{ marginTop: 8 }}>
-          <div className="field">
-            <label>Banca <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional)</span></label>
-            <select value={banca} onChange={e => setBanca(e.target.value)}>
-              <option value="">Todas</option>
-              {filters.bancas.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
+        {mode !== 'prova' && (
+          <div className="grid grid-4" style={{ marginTop: 8 }}>
+            <div className="field">
+              <label>Banca <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional)</span></label>
+              <select value={banca} onChange={e => setBanca(e.target.value)}>
+                <option value="">Todas</option>
+                {filters.bancas.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Ano <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional)</span></label>
+              <select value={ano} onChange={e => setAno(e.target.value)}>
+                <option value="">Todos</option>
+                {filters.anos.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Órgão <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional)</span></label>
+              <select value={orgao} onChange={e => setOrgao(e.target.value)}>
+                <option value="">Todos</option>
+                {(filters.orgaos || []).map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label>Cargo <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional)</span></label>
+              <select value={cargo} onChange={e => setCargo(e.target.value)}>
+                <option value="">Todos</option>
+                {(filters.cargos || []).map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="field">
-            <label>Ano <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(opcional)</span></label>
-            <select value={ano} onChange={e => setAno(e.target.value)}>
-              <option value="">Todos</option>
-              {filters.anos.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-          </div>
-        </div>
+        )}
       </section>
 
       <section className="card">
@@ -255,10 +300,10 @@ export default function NovoSimulado() {
       </section>
 
       <div className="solve-actions" style={{ marginTop: 24 }}>
-        <button className="btn btn-gold" onClick={() => create('resolver')} disabled={busy}>
+        <button className="btn btn-gold" onClick={() => create('resolver')} disabled={busy || (mode === 'prova' && !provaChave)}>
           <Icons.play /> {busy ? 'Montando…' : 'Iniciar no aplicativo'}
         </button>
-        <button className="btn btn-ghost" onClick={() => create('imprimir')} disabled={busy}>
+        <button className="btn btn-ghost" onClick={() => create('imprimir')} disabled={busy || (mode === 'prova' && !provaChave)}>
           <Icons.print /> Gerar para impressão
         </button>
       </div>

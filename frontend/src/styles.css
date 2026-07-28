@@ -589,3 +589,55 @@ button { border: none; background: none; padding: 0; }
 /* Selo de meta atingida: clicável para rever a comemoração */
 .badge.is-replay{cursor:pointer;transition:transform .12s ease,box-shadow .15s ease;}
 .badge.is-replay:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(46,125,91,.25);}
+
+/* ============ SELETOR DE CONTEÚDO (matérias/tópicos) ============ */
+.picker{border:1.5px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden;}
+.picker-top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:#fcfcfa;}
+.picker-search{flex:1;position:relative;display:flex;align-items:center;}
+.picker-search svg{position:absolute;left:12px;color:var(--muted);pointer-events:none;}
+.picker-search input{width:100%;padding:9px 12px 9px 38px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;background:var(--card);}
+.picker-search input:focus{border-color:var(--navy-600);outline:none;box-shadow:0 0 0 3px rgba(41,69,110,.1);}
+.picker-clear{flex:0 0 auto;background:none;border:none;color:var(--navy-600);font-size:13px;font-weight:600;padding:6px 8px;border-radius:8px;}
+.picker-clear:hover{background:var(--gold-soft);color:var(--gold);}
+.picker-summary{padding:9px 14px;font-size:13px;color:var(--ink);background:var(--gold-soft);border-bottom:1px solid var(--line);}
+.picker-summary .ps-muted{color:var(--muted);}
+.picker-list{max-height:340px;overflow-y:auto;}
+.picker-empty,.pk-none{padding:16px;font-size:13.5px;color:var(--muted);text-align:center;}
+
+.pk-group{border-bottom:1px solid var(--line);}
+.pk-group:last-child{border-bottom:none;}
+.pk-group.has-sel{background:rgba(180,147,68,.05);}
+.pk-subject{display:flex;align-items:center;gap:10px;padding:10px 14px;}
+.pk-check{flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0;}
+.pk-check input,.pk-topic input{width:16px;height:16px;accent-color:var(--navy);flex:0 0 auto;cursor:pointer;}
+.pk-subject .pk-name{font-weight:600;font-size:14.5px;color:var(--ink);}
+.pk-name{overflow:hidden;text-overflow:ellipsis;}
+.pk-count{flex:0 0 auto;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);background:#f1f1ee;border-radius:6px;padding:2px 7px;}
+.pk-toggle{flex:0 0 auto;background:none;border:none;color:var(--muted);padding:4px 6px;border-radius:6px;}
+.pk-toggle:hover:not(:disabled){background:#f1f1ee;color:var(--ink);}
+.pk-toggle:disabled{opacity:.3;}
+.pk-caret{display:inline-block;transition:transform .18s ease;font-size:13px;}
+.pk-caret.open{transform:rotate(180deg);}
+.pk-topics{padding:2px 14px 10px 40px;display:grid;gap:2px;}
+.pk-topic{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--ink);}
+.pk-topic:hover{background:#f6f6f2;}
+.pk-topic.on{background:var(--gold-soft);}
+
+/* ============ PROVA INTEIRA ============ */
+.provas-wrap{margin-top:6px;}
+.provas-wrap .picker-top{border:1.5px solid var(--line);border-bottom:none;border-radius:14px 14px 0 0;}
+.prova-list{border:1.5px solid var(--line);border-radius:0 0 14px 14px;max-height:360px;overflow-y:auto;background:var(--card);}
+.prova-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .14s;}
+.prova-row:last-child{border-bottom:none;}
+.prova-row:hover{background:#f8f8f4;}
+.prova-row.on{background:var(--gold-soft);box-shadow:inset 3px 0 0 var(--gold);}
+.prova-row input{width:17px;height:17px;accent-color:var(--navy);flex:0 0 auto;}
+.prova-row .pr-main{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.prova-row .pr-cargo{font-weight:600;font-size:14.5px;color:var(--ink);}
+.prova-row .pr-orgao{font-size:12.5px;color:var(--muted);font-family:var(--font-mono);}
+.prova-row .pr-meta{flex:0 0 auto;font-size:12.5px;color:var(--muted);text-align:right;}
+
+@media (max-width:640px){
+  .prova-row{flex-wrap:wrap;}
+  .prova-row .pr-meta{width:100%;text-align:left;padding-left:29px;}
+}

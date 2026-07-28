@@ -33,8 +33,30 @@ router.post('/simulados', auth, async (req, res) => {
   const extraArgs = [];
   if (b.banca) { extraWhere.push('q.banca = ?'); extraArgs.push(b.banca); }
   if (b.ano) { extraWhere.push('q.ano = ?'); extraArgs.push(b.ano); }
+  if (b.orgao) { extraWhere.push('q.orgao = ?'); extraArgs.push(b.orgao); }
+  if (b.cargo) { extraWhere.push('q.cargo = ?'); extraArgs.push(b.cargo); }
 
-  if (b.mode === 'composto') {
+  if (b.mode === 'prova') {
+    // Prova inteira: identificada por banca|ano|órgão|cargo|caderno.
+    const partes = String(b.prova_chave || '').split('|');
+    if (partes.length !== 5) return res.status(400).json({ error: 'Selecione a prova que deseja aplicar.' });
+    const [banca, ano, orgao, cargo, caderno] = partes;
+    if (!orgao || !cargo) return res.status(400).json({ error: 'Selecione a prova que deseja aplicar.' });
+
+    const cond = ['q.orgao = ?', 'q.cargo = ?'];
+    const args = [orgao, cargo];
+    // Campos vazios são tratados como "sem valor" (IS NULL ou string vazia).
+    cond.push(banca ? 'q.banca = ?' : "(q.banca IS NULL OR q.banca = '')"); if (banca) args.push(banca);
+    cond.push(ano ? 'q.ano = ?' : 'q.ano IS NULL'); if (ano) args.push(Number(ano));
+    cond.push(caderno ? 'q.prova = ?' : "(q.prova IS NULL OR q.prova = '')"); if (caderno) args.push(caderno);
+
+    // Ordem original de cadastro — reproduz a sequência da prova aplicada.
+    const rows = await all(`
+      SELECT q.id FROM questions q JOIN topics t ON t.id = q.topic_id
+      WHERE ${cond.join(' AND ')} ORDER BY q.id`, args);
+    if (!rows.length) return res.status(400).json({ error: 'Não há questões cadastradas para essa prova.' });
+    questionIds = rows.map(r => r.id);
+  } else if (b.mode === 'composto') {
     // Modo B — lista [{ subject_id, quantity }]
     const comp = Array.isArray(b.composition) ? b.composition.filter(c => c.subject_id && Number(c.quantity) > 0) : [];
     if (!comp.length) return res.status(400).json({ error: 'Defina ao menos uma matéria com quantidade de questões.' });
@@ -74,7 +96,9 @@ router.post('/simulados', auth, async (req, res) => {
   }
 
   if (!questionIds.length) return res.status(400).json({ error: 'Nenhuma questão disponível para montar o simulado.' });
-  questionIds = shuffle(questionIds); // ordem final embaralhada (não agrupa por matéria)
+  // A prova inteira mantém a ordem original do caderno; os demais modos embaralham
+  // para não agrupar por matéria.
+  if (b.mode !== 'prova') questionIds = shuffle(questionIds);
 
   const { lastId: simuladoId } = await run(`
     INSERT INTO simulados (user_id, title, feedback_mode, time_mode, total_seconds, seconds_per_question, total_questions)

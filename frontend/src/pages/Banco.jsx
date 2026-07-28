@@ -14,7 +14,7 @@ const TABS = [
 const emptyForm = {
   subject_id: '', topic_id: '', passage_id: '', statement: '',
   options: ['', '', '', ''], correct_index: 0, comment: '',
-  difficulty: 'media', banca: '', ano: '', orgao: '', cargo: '', nivel: '',
+  difficulty: 'media', banca: '', ano: '', orgao: '', cargo: '', nivel: '', prova: '',
   image_url: '', video_url: '',
 };
 
@@ -113,6 +113,7 @@ function QuestionForm({ subjects, passages, initial, onSaved, onCancel, onCatalo
       orgao: form.orgao || undefined,
       cargo: form.cargo || undefined,
       nivel: form.nivel || undefined,
+      prova: form.prova || undefined,
       image_url: form.image_url || undefined,
       video_url: form.video_url || undefined,
     };
@@ -123,7 +124,7 @@ function QuestionForm({ subjects, passages, initial, onSaved, onCancel, onCatalo
       } else {
         await api('/questoes', { method: 'POST', body });
         setMsg({ type: 'ok', text: 'Questão cadastrada! Você pode cadastrar a próxima.' });
-        setForm(f => ({ ...emptyForm, subject_id: f.subject_id, topic_id: f.topic_id, banca: f.banca, ano: f.ano, orgao: f.orgao, cargo: f.cargo, nivel: f.nivel }));
+        setForm(f => ({ ...emptyForm, subject_id: f.subject_id, topic_id: f.topic_id, banca: f.banca, ano: f.ano, orgao: f.orgao, cargo: f.cargo, nivel: f.nivel, prova: f.prova }));
       }
       onSaved?.();
     } catch (e2) { setMsg({ type: 'error', text: e2.message }); }
@@ -208,6 +209,11 @@ function QuestionForm({ subjects, passages, initial, onSaved, onCancel, onCatalo
         <div className="field"><label>Órgão</label><input value={form.orgao} onChange={set('orgao')} placeholder="Ex.: TJ-MG" /></div>
         <div className="field"><label>Cargo</label><input value={form.cargo} onChange={set('cargo')} placeholder="Ex.: Analista" /></div>
         <div className="field"><label>Nível</label><input value={form.nivel} onChange={set('nivel')} placeholder="Ex.: Superior" /></div>
+        <div className="field">
+          <label>Caderno da prova</label>
+          <input value={form.prova} onChange={set('prova')} placeholder="Ex.: Prova 2" />
+          <div className="hint">Só quando o mesmo concurso tem mais de um caderno.</div>
+        </div>
       </div>
 
       <div className="grid grid-2">
@@ -287,7 +293,7 @@ function TabGerenciar({ subjects, passages }) {
       comment: full.comment || '',
       difficulty: full.difficulty || 'media',
       banca: full.banca || '', ano: full.ano || '', orgao: full.orgao || '',
-      cargo: full.cargo || '', nivel: full.nivel || '',
+      cargo: full.cargo || '', nivel: full.nivel || '', prova: full.prova || '',
       image_url: full.image_url || '', video_url: full.video_url || '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -421,7 +427,8 @@ function TabImportar({ onDone }) {
       </p>
       <ol className="import-steps">
         <li>Baixe a planilha-modelo (já vem com uma linha de exemplo).</li>
-        <li>Preencha: <code>materia, topico, enunciado, imagem_url, alternativa_a…e, correta (A–E ou 1–5), comentario, dificuldade, banca, ano, orgao, cargo, nivel, video_url</code>.</li>
+        <li>Preencha: <code>materia, topico, enunciado, imagem_url, alternativa_a…e, correta (A–E ou 1–5), comentario, dificuldade, banca, ano, orgao, cargo, nivel, prova, video_url</code>.</li>
+        <li>Para montar a <strong>prova inteira</strong> depois, preencha <code>orgao</code> e <code>cargo</code>. Use <code>prova</code> só quando o mesmo concurso tiver cadernos diferentes (ex.: <code>Prova 2</code>).</li>
         <li>Questão com <strong>texto-base</strong>? Preencha <code>texto_base_titulo</code>, <code>texto_base_conteudo</code> e <code>texto_base_fonte</code> — linhas com o mesmo título compartilham o mesmo texto (preencha o conteúdo só na primeira). O modelo traz um exemplo pronto.</li>
         <li>Envie o arquivo (.xlsx, até 5&nbsp;MB). Linhas com erro são ignoradas e listadas no resumo.</li>
       </ol>

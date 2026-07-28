@@ -7,7 +7,7 @@ const { auth, adminOnly } = require('../middleware/auth');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-const COLUMNS = ['materia', 'topico', 'enunciado', 'imagem_url', 'alternativa_a', 'alternativa_b', 'alternativa_c', 'alternativa_d', 'alternativa_e', 'correta', 'comentario', 'dificuldade', 'banca', 'ano', 'orgao', 'cargo', 'nivel', 'video_url', 'texto_base_titulo', 'texto_base_conteudo', 'texto_base_fonte', 'texto_base_imagem_url'];
+const COLUMNS = ['materia', 'topico', 'enunciado', 'imagem_url', 'alternativa_a', 'alternativa_b', 'alternativa_c', 'alternativa_d', 'alternativa_e', 'correta', 'comentario', 'dificuldade', 'banca', 'ano', 'orgao', 'cargo', 'nivel', 'prova', 'video_url', 'texto_base_titulo', 'texto_base_conteudo', 'texto_base_fonte', 'texto_base_imagem_url'];
 
 // Gera e baixa o arquivo-modelo .xlsx com uma linha de exemplo.
 router.get('/importacao/modelo', auth, adminOnly, (_req, res) => {
@@ -31,6 +31,7 @@ router.get('/importacao/modelo', auth, adminOnly, (_req, res) => {
     orgao: 'TJ-MG',
     cargo: 'Analista Judiciário',
     nivel: 'superior',
+    prova: '',
     video_url: '',
     texto_base_titulo: 'O valor do hábito',
     texto_base_conteudo: 'A aprovação em um concurso raramente nasce de um único dia heroico de estudos. Ela é construída na soma silenciosa de pequenos avanços diários: a questão resolvida no intervalo, a revisão feita mesmo no cansaço, o simulado encarado como ensaio do dia da prova. Quem transforma o estudo em hábito deixa de depender da motivação — e passa a contar com a constância.',
@@ -79,7 +80,7 @@ router.get('/importacao/exportar', auth, adminOnly, async (_req, res) => {
       s.name  AS materia,
       t.name  AS topico,
       q.statement, q.image_url, q.options, q.correct_index, q.comment, q.difficulty,
-      q.banca, q.ano, q.orgao, q.cargo, q.nivel, q.video_url,
+      q.banca, q.ano, q.orgao, q.cargo, q.nivel, q.prova, q.video_url,
       p.title AS p_title, p.content AS p_content, p.source AS p_source, p.image_url AS p_image
     FROM questions q
     JOIN topics   t ON t.id = q.topic_id
@@ -113,6 +114,7 @@ router.get('/importacao/exportar', auth, adminOnly, async (_req, res) => {
       orgao: r.orgao || '',
       cargo: r.cargo || '',
       nivel: r.nivel || '',
+      prova: r.prova || '',
       video_url: r.video_url || '',
       texto_base_titulo: '',
       texto_base_conteudo: '',
@@ -245,13 +247,13 @@ router.post('/importacao', auth, adminOnly, upload.single('arquivo'), async (req
       }
       const ano = String(r.ano ?? '').trim() ? parseInt(r.ano, 10) : null;
       await run(`
-        INSERT INTO questions (topic_id, passage_id, statement, image_url, options, correct_index, comment, difficulty, banca, ano, orgao, cargo, nivel, video_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        INSERT INTO questions (topic_id, passage_id, statement, image_url, options, correct_index, comment, difficulty, banca, ano, orgao, cargo, nivel, prova, video_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [topicId, passageId, enunciado, String(r.imagem_url ?? '').trim() || null, JSON.stringify(options), correctIndex,
          String(r.comentario ?? '').trim() || null, difficulty,
          String(r.banca ?? '').trim() || null, Number.isFinite(ano) ? ano : null,
          String(r.orgao ?? '').trim() || null, String(r.cargo ?? '').trim() || null,
-         String(r.nivel ?? '').trim().toLowerCase() || null, String(r.video_url ?? '').trim() || null]);
+         String(r.nivel ?? '').trim().toLowerCase() || null, String(r.prova ?? '').trim() || null, String(r.video_url ?? '').trim() || null]);
       imported++;
     } catch (e) {
       errors.push({ linha: line, motivo: 'Erro ao gravar a questão: ' + e.message });

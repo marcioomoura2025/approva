@@ -53,7 +53,7 @@ export default function RevisaoProgramada() {
   if (error && !data) return <div className="alert alert-error">{error}</div>;
   if (!data) return <Spinner />;
 
-  const { total, itens } = data;
+  const { total, itens, proximos = [], ja_estudou } = data;
   const urgentes = itens.filter(i => i.motivo === 'errou' || i.motivo === 'chute').length;
 
   return (
@@ -66,11 +66,34 @@ export default function RevisaoProgramada() {
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      {total === 0 ? (
+      {total === 0 && !ja_estudou ? (
         <Empty icon="refresh" title="Nada para revisar por enquanto"
           action={<button className="btn btn-gold" onClick={() => navigate('/novo')}><Icons.play /> Fazer um simulado</button>}>
           Assim que você resolver simulados, cada tópico ganha uma data de revisão. Quando essa data chegar, ele aparece aqui automaticamente — mais cedo para o que você errou ou chutou, mais tarde para o que domina.
         </Empty>
+      ) : total === 0 ? (
+        <>
+          <section className="review-cta em-dia">
+            <div>
+              <div className="rc-count"><Icons.check size={30} /></div>
+              <div className="rc-text">
+                <strong>Tudo em dia — nada vencido agora</strong>
+                <span className="rc-sub">
+                  {proximos.length === 1
+                    ? `Você tem 1 tópico em espera. O primeiro volta em ${proximos[0].dias_para_revisar} dia(s).`
+                    : `Você tem ${proximos.length} tópicos em espera. O primeiro volta em ${proximos[0]?.dias_para_revisar} dia(s).`}
+                </span>
+              </div>
+            </div>
+            <button className="btn btn-ghost" onClick={() => navigate('/novo')}>
+              <Icons.play /> Fazer um simulado
+            </button>
+          </section>
+          <p className="review-note">
+            A revisão só sugere um tópico quando chega perto da hora de você esquecê-lo — por isso ele não aparece logo depois de responder. O que você errou volta em 2 dias; o que acertou no chute, em 3; o que acertou, em 7; e o que já domina, em 16.
+          </p>
+          <ProximasRevisoes proximos={proximos} />
+        </>
       ) : (
         <>
           <section className="review-cta">
@@ -109,8 +132,42 @@ export default function RevisaoProgramada() {
               );
             })}
           </div>
+
+          <ProximasRevisoes proximos={proximos} />
         </>
       )}
     </>
+  );
+}
+
+/* Agenda do que ainda está "descansando" — deixa claro que o app está contando. */
+function ProximasRevisoes({ proximos }) {
+  if (!proximos?.length) return null;
+  return (
+    <section className="card" style={{ marginTop: 20 }}>
+      <div className="card-head">
+        <div>
+          <h2><Icons.clock size={18} /> Próximas revisões</h2>
+          <p className="card-sub">Tópicos já estudados que ainda estão no intervalo de descanso.</p>
+        </div>
+      </div>
+      <div className="review-list" style={{ marginTop: 4 }}>
+        {proximos.slice(0, 12).map(it => (
+          <div className="review-row proxima" key={it.topic_id}>
+            <div className="rr-main">
+              <div className="rr-topic">{it.topic_name}</div>
+              <div className="rr-subject">{it.subject_name}</div>
+            </div>
+            <div className="rr-meta">
+              <span className="badge badge-muted">em {it.dias_para_revisar} dia(s)</span>
+              <span className="rr-when">respondido {tempo(it.dias_desde_resposta)}</span>
+            </div>
+          </div>
+        ))}
+        {proximos.length > 12 && (
+          <p className="review-note">e mais {proximos.length - 12} tópico(s).</p>
+        )}
+      </div>
+    </section>
   );
 }

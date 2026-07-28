@@ -51,48 +51,65 @@ async function dueTopics(userId) {
 
   const now = Date.now();
   const parseUtc = (s) => Date.parse(String(s).replace(' ', 'T') + 'Z');
-  const items = [];
+  const vencidos = [];
+  const proximos = [];
 
   for (const list of byTopic.values()) {
     list.sort((a, b) => a.rn - b.rn);
     const last = list[0];
     const prev = list[1] || null;
     const { dias, motivo } = intervalFor(last, prev);
-    const dueAt = parseUtc(last.answered_at) + dias * 864e5;
-    const overdueDays = Math.floor((now - dueAt) / 864e5);
+    const respondidoEm = parseUtc(last.answered_at);
+    const dueAt = respondidoEm + dias * 864e5;
+
+    const base = {
+      topic_id: last.topic_id,
+      topic_name: last.topic_name,
+      subject_name: last.subject_name,
+      motivo,                                   // errou | chute | acerto | solido
+      intervalo_dias: dias,
+      dias_desde_resposta: Math.floor((now - respondidoEm) / 864e5),
+      ultima_resposta: last.answered_at,
+    };
+
     if (now >= dueAt) {
-      items.push({
-        topic_id: last.topic_id,
-        topic_name: last.topic_name,
-        subject_name: last.subject_name,
-        motivo,                                   // errou | chute | acerto | solido
-        intervalo_dias: dias,
-        dias_desde_resposta: Math.floor((now - parseUtc(last.answered_at)) / 864e5),
-        dias_em_atraso: Math.max(0, overdueDays),
-        ultima_resposta: last.answered_at,
-      });
+      vencidos.push({ ...base, dias_em_atraso: Math.max(0, Math.floor((now - dueAt) / 864e5)) });
+    } else {
+      // Ainda "descansando": guardamos quando volta, para a tela poder dizer
+      // "tudo em dia — próxima revisão em X dias" em vez de parecer vazia.
+      proximos.push({ ...base, dias_para_revisar: Math.max(1, Math.ceil((dueAt - now) / 864e5)) });
     }
   }
 
   // Mais atrasado primeiro; empate → quem errou/chutou tem prioridade.
   const peso = { errou: 0, chute: 1, acerto: 2, solido: 3 };
-  items.sort((a, b) => (b.dias_em_atraso - a.dias_em_atraso) || (peso[a.motivo] - peso[b.motivo]));
-  return items;
+  vencidos.sort((a, b) => (b.dias_em_atraso - a.dias_em_atraso) || (peso[a.motivo] - peso[b.motivo]));
+  proximos.sort((a, b) => a.dias_para_revisar - b.dias_para_revisar);
+  return { vencidos, proximos };
 }
 
-// Lista de tópicos prontos para revisão.
+// Lista de tópicos prontos para revisão (e os que ainda estão descansando).
 router.get('/revisao-programada', auth, async (req, res) => {
-  const itens = await dueTopics(req.user.id);
-  res.json({ total: itens.length, itens });
+  const { vencidos, proximos } = await dueTopics(req.user.id);
+  res.json({
+    total: vencidos.length,
+    itens: vencidos,
+    proximos,
+    // Diferencia "nunca respondeu nada" de "respondeu, mas ainda não venceu".
+    ja_estudou: vencidos.length + proximos.length > 0,
+    proximo_em_dias: proximos.length ? proximos[0].dias_para_revisar : null,
+  });
 });
 
 // Resumo enxuto para o card do Painel.
 router.get('/revisao-programada/resumo', auth, async (req, res) => {
-  const itens = await dueTopics(req.user.id);
+  const { vencidos, proximos } = await dueTopics(req.user.id);
   res.json({
-    total: itens.length,
-    urgentes: itens.filter((i) => i.motivo === 'errou' || i.motivo === 'chute').length,
-    topic_ids: itens.map((i) => i.topic_id),
+    total: vencidos.length,
+    urgentes: vencidos.filter((i) => i.motivo === 'errou' || i.motivo === 'chute').length,
+    topic_ids: vencidos.map((i) => i.topic_id),
+    ja_estudou: vencidos.length + proximos.length > 0,
+    proximo_em_dias: proximos.length ? proximos[0].dias_para_revisar : null,
   });
 });
 

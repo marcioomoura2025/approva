@@ -699,7 +699,7 @@ button { border: none; background: none; padding: 0; }
 }
 
 /* ============ MAPA DE CONSTÂNCIA ============ */
-.heatmap-card{min-width:0;overflow:hidden;}
+.heatmap-card{min-width:0;overflow:hidden;margin-bottom:18px;}
 .heatmap-card .card-head{flex-wrap:wrap;gap:12px;}
 .heatmap-card .hm-stats{display:flex;gap:22px;flex:0 0 auto;}
 .hm-stat{text-align:right;}

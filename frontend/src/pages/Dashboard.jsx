@@ -52,6 +52,8 @@ export default function Dashboard() {
         </Link>
       )}
 
+      {atividade && <Heatmap dados={atividade} />}
+
       <div className="grid grid-4">
         <StatCard tone="navy" icon="check" label="Aproveitamento" value={geral.aproveitamento} suffix="%"
           foot={`${geral.total_acertos} acertos em ${geral.total_respondidas} questões`} />
@@ -97,8 +99,6 @@ export default function Dashboard() {
             </div>
           )}
         </section>
-
-        {atividade && <Heatmap dados={atividade} />}
 
         <section className="card hoverable">
           <div className="card-head"><div><h2>Simulados recentes</h2>

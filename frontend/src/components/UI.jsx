@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LogoFull } from './Logo';
 import { useAuth } from '../context/AuthContext';
+import { ThemeToggle } from '../context/ThemeContext';
 
 /* ---------- Ícones (traço simples, 18px) ---------- */
 const I = (path, vb = '0 0 24 24') => ({ size = 18 }) => (
@@ -154,6 +155,7 @@ export function Shell({ children }) {
           </>
         )}
       </nav>
+      <ThemeToggle />
       <div className="sidebar-user">
         <div className="avatar">{initials}</div>
         <div className="who">

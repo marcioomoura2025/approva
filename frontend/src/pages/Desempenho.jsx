@@ -90,13 +90,13 @@ export default function Desempenho() {
                 <BarChart data={materias} margin={{ top: 20, right: 8, left: -18, bottom: 4 }} barGap={6}>
                   <defs>
                     <linearGradient id="gradAprov" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#d8b55c" /><stop offset="100%" stopColor="#b49344" />
+                      <stop offset="0%" stopColor="var(--chart-a1)" /><stop offset="100%" stopColor="var(--chart-a2)" />
                     </linearGradient>
                     <linearGradient id="gradDom" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#29456e" /><stop offset="100%" stopColor="#152641" />
+                      <stop offset="0%" stopColor="var(--chart-b1)" /><stop offset="100%" stopColor="var(--chart-b2)" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#e4e2da" vertical={false} />
+                  <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fontFamily: 'IBM Plex Mono' }} interval={0} angle={-12} height={54} textAnchor="end" axisLine={{ stroke: '#e4e2da' }} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 12, fontFamily: 'IBM Plex Mono' }} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(v) => `${v}%`} cursor={{ fill: 'rgba(180,147,68,0.07)' }} />
@@ -125,16 +125,16 @@ export default function Desempenho() {
                 <AreaChart data={evoData} margin={{ top: 8, right: 10, left: -18, bottom: 4 }}>
                   <defs>
                     <linearGradient id="goldArea" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#d8b55c" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#d8b55c" stopOpacity={0} />
+                      <stop offset="0%" stopColor="var(--chart-a1)" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="var(--chart-a1)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#e4e2da" vertical={false} />
+                  <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fontFamily: 'IBM Plex Mono' }} axisLine={{ stroke: '#e4e2da' }} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 12, fontFamily: 'IBM Plex Mono' }} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(v) => `${v}%`} />
                   <Area type="monotone" dataKey="Aproveitamento" stroke="var(--gold)" strokeWidth={3}
-                    fill="url(#goldArea)" dot={{ fill: '#fff', stroke: 'var(--gold)', strokeWidth: 3, r: 4.5 }}
+                    fill="url(#goldArea)" dot={{ fill: 'var(--card)', stroke: 'var(--gold)', strokeWidth: 3, r: 4.5 }}
                     activeDot={{ r: 6, fill: '#fff', stroke: 'var(--gold)', strokeWidth: 3 }} />
                 </AreaChart>
               </ResponsiveContainer>

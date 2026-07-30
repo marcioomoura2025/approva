@@ -127,6 +127,12 @@ async function init() {
   // Identifica a prova aplicada quando um mesmo concurso tem mais de um caderno
   // (ex.: "Prova 2"). Vazio = o concurso tem prova única.
   try { await db.execute('ALTER TABLE questions ADD COLUMN prova TEXT'); } catch { /* já existe */ }
+  // Quando o usuário marca um erro/chute como "já estudei", guardamos o momento.
+  // Se ele errar a mesma questão depois disso, ela volta para a lista sozinha.
+  try { await db.execute('ALTER TABLE user_question_state ADD COLUMN dismissed_at TEXT'); } catch { /* já existe */ }
+  // Guardamos também a última resposta conhecida no momento da dispensa. Comparar
+  // por id é exato — comparar por data falharia para respostas no mesmo segundo.
+  try { await db.execute('ALTER TABLE user_question_state ADD COLUMN dismissed_answer_id INTEGER'); } catch { /* já existe */ }
 
 }
 

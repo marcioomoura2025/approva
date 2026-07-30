@@ -117,7 +117,7 @@ export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const NAV = [
   { to: '/', label: 'Início', icon: 'home', end: true },
   { to: '/novo', label: 'Novo simulado', icon: 'plus' },
-  { to: '/revisoes', label: 'Revisões', icon: 'bookmark' },
+  { to: '/revisoes', label: 'Marcações', icon: 'bookmark' },
   { to: '/revisao-programada', label: 'Revisão programada', icon: 'refresh' },
   { to: '/desempenho', label: 'Desempenho', icon: 'chart' },
   { to: '/ranking', label: 'Ranking', icon: 'trophy' },

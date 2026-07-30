@@ -101,11 +101,52 @@ router.get('/me/erros', auth, async (req, res) => {
     LEFT JOIN user_question_state st ON st.question_id = q.id AND st.user_id = a.user_id
     WHERE a.user_id = ? AND (a.is_correct = 0 OR a.guessed = 1)
     GROUP BY q.id
+    HAVING st.dismissed_answer_id IS NULL OR MAX(a.id) > st.dismissed_answer_id
     ORDER BY last_answered DESC LIMIT 200`, [req.user.id]);
   res.json(rows.map(r => mapFull(r, {
     wrong_count: Number(r.wrong_count),
     guess_count: Number(r.guess_count),
   })));
+});
+
+// Marca um erro/chute como "já estudei" — sai da lista até errar de novo.
+router.post('/me/erros/:questionId/resolver', auth, async (req, res) => {
+  const qid = Number(req.params.questionId);
+  const desfazer = req.body?.desfazer === true;
+  const q = await get('SELECT id FROM questions WHERE id = ?', [qid]);
+  if (!q) return res.status(404).json({ error: 'Questão não encontrada.' });
+
+  const ultima = await get(
+    'SELECT MAX(id) AS id FROM answers WHERE user_id = ? AND question_id = ?', [req.user.id, qid]);
+  const ref = desfazer ? null : (ultima?.id || 0);
+  const quando = desfazer ? null : new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+  await run(`INSERT INTO user_question_state (user_id, question_id, dismissed_at, dismissed_answer_id)
+             VALUES (?, ?, ?, ?)
+             ON CONFLICT(user_id, question_id) DO UPDATE SET
+               dismissed_at = excluded.dismissed_at,
+               dismissed_answer_id = excluded.dismissed_answer_id,
+               updated_at = datetime('now')`,
+    [req.user.id, qid, quando, ref]);
+  res.json({ ok: true, resolvido: !desfazer });
+});
+
+// Limpa a lista inteira de erros & chutes de uma vez.
+router.post('/me/erros/limpar', auth, async (req, res) => {
+  const agora = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const rows = await all(`
+    SELECT a.question_id AS id, MAX(a.id) AS ultima FROM answers a
+    WHERE a.user_id = ? AND (a.is_correct = 0 OR a.guessed = 1)
+    GROUP BY a.question_id`, [req.user.id]);
+  for (const r of rows) {
+    await run(`INSERT INTO user_question_state (user_id, question_id, dismissed_at, dismissed_answer_id)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(user_id, question_id) DO UPDATE SET
+                 dismissed_at = excluded.dismissed_at,
+                 dismissed_answer_id = excluded.dismissed_answer_id,
+                 updated_at = datetime('now')`, [req.user.id, r.id, agora, Number(r.ultima)]);
+  }
+  res.json({ ok: true, limpas: rows.length });
 });
 
 module.exports = router;

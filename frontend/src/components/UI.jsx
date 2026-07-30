@@ -30,6 +30,7 @@ export const Icons = {
   check: I(<path d="m4.5 12.5 5 5L20 6" />),
   x: I(<><path d="M6 6l12 12" /><path d="M18 6 6 18" /></>),
   download: I(<><path d="M12 3v12" /><path d="m7 11 5 5 5-5" /><path d="M4 20h16" /></>),
+  calendar: I(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>),
   search: I(<><circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" /></>),
   fileText: I(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h4" /></>),
   trash: I(<><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M7 7l1 13h8l1-13" /><path d="M10 11v6M14 11v6" /></>),

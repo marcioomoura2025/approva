@@ -92,7 +92,9 @@ export default function Revisoes() {
           <Icons.foot size={18} />
           <span>
             Este caderno se monta sozinho: entram as questões que você <strong>errou</strong> e também as que <strong>acertou no chute</strong> —
-            porque acerto na sorte não é conteúdo dominado. Já revisou alguma? Use <strong>“Já estudei esta”</strong> para tirá-la da lista — ela volta sozinha se você errar de novo.
+            porque acerto na sorte não é conteúdo dominado.
+            <br />
+            Já revisou alguma? Use <strong>“Já estudei esta”</strong> para tirá-la da lista — ela volta sozinha se você errar de novo.
           </span>
         </div>
       )}

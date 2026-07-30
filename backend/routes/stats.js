@@ -102,4 +102,89 @@ router.get('/ranking', auth, async (req, res) => {
   })));
 });
 
+/*
+  Mapa de constância — quantas questões o usuário respondeu em cada dia.
+
+  As respostas ficam gravadas em UTC. Como "o dia" depende de onde a pessoa
+  está, o cliente informa seu fuso (minutos a somar ao UTC; no Brasil, -180).
+  Sem isso, estudar às 22h apareceria no dia seguinte.
+*/
+router.get('/stats/atividade', auth, async (req, res) => {
+  const tz = Math.max(-840, Math.min(840, parseInt(req.query.tz, 10) || 0));
+  const desloc = `${tz} minutes`;
+  const semanas = Math.max(4, Math.min(53, parseInt(req.query.semanas, 10) || 14));
+
+  const hojeRow = await get(`SELECT date('now', ?) AS d`, [desloc]);
+  const hoje = hojeRow.d;
+
+  // Um registro por dia estudado (dias sem estudo simplesmente não aparecem).
+  const rows = await all(`
+    SELECT date(a.answered_at, ?) AS dia, COUNT(*) AS n
+    FROM answers a
+    WHERE a.user_id = ?
+    GROUP BY dia
+    ORDER BY dia`, [desloc, req.user.id]);
+
+  const porDia = {};
+  for (const r of rows) porDia[r.dia] = Number(r.n);
+
+  // ---- grade: começa no domingo, para as colunas virarem semanas ----
+  const umDia = 864e5;
+  const fim = new Date(`${hoje}T00:00:00Z`);
+  const inicioBruto = new Date(fim.getTime() - (semanas * 7 - 1) * umDia);
+  const inicio = new Date(inicioBruto.getTime() - inicioBruto.getUTCDay() * umDia);
+  const iso = (d) => d.toISOString().slice(0, 10);
+
+  const dias = [];
+  let totalPeriodo = 0;
+  for (let t = inicio.getTime(); t <= fim.getTime(); t += umDia) {
+    const d = iso(new Date(t));
+    const n = porDia[d] || 0;
+    totalPeriodo += n;
+    dias.push({ dia: d, n });
+  }
+
+  // ---- sequências (todo o histórico, não só a janela exibida) ----
+  const estudados = rows.map(r => r.dia).sort();
+  let melhor = 0, corrente = 0, anterior = null;
+  for (const d of estudados) {
+    const atual = new Date(`${d}T00:00:00Z`).getTime();
+    corrente = (anterior !== null && atual - anterior === umDia) ? corrente + 1 : 1;
+    if (corrente > melhor) melhor = corrente;
+    anterior = atual;
+  }
+
+  // Sequência atual: conta para trás a partir de hoje (ou de ontem, se hoje
+  // ainda não houve estudo — o dia não terminou, então não é uma quebra).
+  const temEstudo = (d) => (porDia[d] || 0) > 0;
+  let ancora = temEstudo(hoje) ? fim : new Date(fim.getTime() - umDia);
+  let atualSeq = 0;
+  if (temEstudo(iso(ancora))) {
+    for (let t = ancora.getTime(); ; t -= umDia) {
+      if (!temEstudo(iso(new Date(t)))) break;
+      atualSeq++;
+    }
+  }
+
+  // ---- mês corrente ----
+  const mes = hoje.slice(0, 7);
+  const diasNoMes = Object.keys(porDia).filter(d => d.startsWith(mes) && porDia[d] > 0).length;
+  const questoesNoMes = Object.entries(porDia)
+    .filter(([d]) => d.startsWith(mes))
+    .reduce((acc, [, n]) => acc + n, 0);
+
+  res.json({
+    hoje,
+    inicio: iso(inicio),
+    dias,
+    total_periodo: totalPeriodo,
+    dias_estudados_mes: diasNoMes,
+    questoes_mes: questoesNoMes,
+    dia_do_mes: Number(hoje.slice(8, 10)),
+    melhor_sequencia: melhor,
+    sequencia_atual: atualSeq,
+    total_dias_estudados: estudados.length,
+  });
+});
+
 module.exports = router;

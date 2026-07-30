@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { PageHead, Spinner, Empty, Icons, StatCard, STUDY_TIPS, fmtTime } from '../components/UI';
+import Heatmap from '../components/Heatmap';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -16,14 +17,16 @@ export default function Dashboard() {
       api('/simulados'),
       api('/revisao-programada/resumo'),
       api('/banco/resumo'),
-    ]).then(([geral, dificuldades, simulados, revisao, banco]) => {
-      setData({ geral, dificuldades, simulados: simulados.slice(0, 5), revisao, banco });
+      // O fuso do navegador define o que é "hoje" para o mapa de constância.
+      api(`/stats/atividade?tz=${-new Date().getTimezoneOffset()}`),
+    ]).then(([geral, dificuldades, simulados, revisao, banco, atividade]) => {
+      setData({ geral, dificuldades, simulados: simulados.slice(0, 5), revisao, banco, atividade });
     }).catch(e => setError(e.message));
   }, []);
 
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!data) return <Spinner />;
-  const { geral, dificuldades, simulados, revisao, banco } = data;
+  const { geral, dificuldades, simulados, revisao, banco, atividade } = data;
   const num = (n) => Number(n || 0).toLocaleString('pt-BR');
   const firstName = (user?.name || '').split(' ')[0];
   const meta = user?.pass_threshold ?? 60;
@@ -94,6 +97,8 @@ export default function Dashboard() {
             </div>
           )}
         </section>
+
+        {atividade && <Heatmap dados={atividade} />}
 
         <section className="card hoverable">
           <div className="card-head"><div><h2>Simulados recentes</h2>

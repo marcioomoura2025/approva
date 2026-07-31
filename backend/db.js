@@ -134,6 +134,20 @@ async function init() {
   // por id é exato — comparar por data falharia para respostas no mesmo segundo.
   try { await db.execute('ALTER TABLE user_question_state ADD COLUMN dismissed_answer_id INTEGER'); } catch { /* já existe */ }
 
+  // Modelos de simulado: guardam uma configuração inteira com um nome, para o
+  // usuário repetir a mesma prova sem preencher tudo de novo.
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS simulado_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      name TEXT NOT NULL,
+      config TEXT NOT NULL,
+      times_used INTEGER NOT NULL DEFAULT 0,
+      last_used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`);
+  await db.execute('CREATE INDEX IF NOT EXISTS idx_templates_user ON simulado_templates(user_id)');
+
 }
 
 module.exports = { db, all, get, run, init };

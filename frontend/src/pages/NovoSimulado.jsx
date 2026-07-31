@@ -10,6 +10,10 @@ export default function NovoSimulado() {
   const [filters, setFilters] = useState({ bancas: [], anos: [], orgaos: [], cargos: [], dificuldades: {} });
   const [provas, setProvas] = useState([]);
   const [buscaProva, setBuscaProva] = useState('');
+  const [modelos, setModelos] = useState([]);
+  const [salvando, setSalvando] = useState(false);
+  const [nomeModelo, setNomeModelo] = useState('');
+  const [msgModelo, setMsgModelo] = useState('');
   const [provaChave, setProvaChave] = useState('');
   const [error, setError] = useState('');
   const [warnings, setWarnings] = useState([]);
@@ -36,8 +40,8 @@ export default function NovoSimulado() {
   const [secondsPerQuestion, setSecondsPerQuestion] = useState(90);
 
   useEffect(() => {
-    Promise.all([api('/materias'), api('/questoes/filtros'), api('/provas')])
-      .then(([m, f, p]) => { setSubjects(m); setFilters(f); setProvas(p); })
+    Promise.all([api('/materias'), api('/questoes/filtros'), api('/provas'), api('/modelos')])
+      .then(([m, f, p, mod]) => { setSubjects(m); setFilters(f); setProvas(p); setModelos(mod); })
       .catch(e => setError(e.message));
   }, []);
 
@@ -102,6 +106,105 @@ export default function NovoSimulado() {
     };
   };
 
+  // ---------- modelos salvos ----------
+
+  // Descreve o modelo em uma linha, para o usuário reconhecer sem abrir.
+  const resumoModelo = (cfg) => {
+    const partes = [];
+    if (cfg.mode === 'prova') {
+      const p = cfg.prova_chave ? cfg.prova_chave.split('|') : [];
+      partes.push(`Prova inteira${p[3] ? `: ${p[3]}` : ''}${p[4] ? ` · ${p[4]}` : ''}`);
+    } else if (cfg.mode === 'composto') {
+      const itens = cfg.composition || [];
+      const total = itens.reduce((a, x) => a + Number(x.quantity || 0), 0);
+      const nomes = itens
+        .map(x => subjects?.find(s => s.id === x.subject_id)?.name)
+        .filter(Boolean);
+      partes.push(`${total} questões`);
+      if (nomes.length) partes.push(nomes.length <= 3 ? nomes.join(' · ') : `${nomes.length} matérias`);
+    } else {
+      partes.push(`${cfg.quantity} questões`);
+      if (cfg.topic_ids?.length) partes.push(`${cfg.topic_ids.length} tópico(s)`);
+      if (cfg.distribuicao) partes.push('por dificuldade');
+      else if (cfg.dificuldade) partes.push({ facil: 'fáceis', media: 'médias', dificil: 'difíceis' }[cfg.dificuldade]);
+    }
+    if (cfg.time_mode === 'total') {
+      const min = Math.round((cfg.total_seconds || 0) / 60);
+      partes.push(min >= 60 ? `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}` : `${min} min`);
+    } else if (cfg.time_mode === 'questao') {
+      partes.push(`${cfg.seconds_per_question}s por questão`);
+    } else partes.push('sem cronômetro');
+    partes.push(cfg.feedback_mode === 'imediato' ? 'gabarito na hora' : 'resultado no final');
+    return partes.join(' · ');
+  };
+
+  const salvarModelo = async () => {
+    const nome = nomeModelo.trim();
+    if (nome.length < 2) { setMsgModelo('Dê um nome com pelo menos 2 caracteres.'); return; }
+    if (mode === 'composto' && compTotal === 0) { setMsgModelo('Defina ao menos uma matéria antes de salvar.'); return; }
+    if (mode === 'prova' && !provaChave) { setMsgModelo('Escolha a prova antes de salvar.'); return; }
+    setSalvando(true); setMsgModelo('');
+    try {
+      const cfg = buildPayload();
+      delete cfg.title;                      // o nome do modelo já identifica
+      const novo = await api('/modelos', { method: 'POST', body: { name: nome, config: cfg } });
+      setModelos(l => [novo, ...l]);
+      setNomeModelo('');
+      setMsgModelo(`Modelo “${novo.name}” salvo.`);
+    } catch (e) { setMsgModelo(e.message); }
+    finally { setSalvando(false); }
+  };
+
+  const iniciarModelo = async (m, destino = 'resolver') => {
+    setBusy(true); setError(''); setWarnings([]);
+    try {
+      const d = await api('/simulados', { method: 'POST', body: { ...m.config, title: m.name } });
+      api(`/modelos/${m.id}/usado`, { method: 'POST' }).catch(() => {});
+      if (destino === 'imprimir') navigate(`/simulados/${d.id}/imprimir`);
+      else navigate(`/simulados/${d.id}`, { state: { warnings: d.warnings } });
+    } catch (e) { setError(e.message); setBusy(false); }
+  };
+
+  // Traz a configuração do modelo de volta para o formulário, para ajustar.
+  const carregarModelo = (m) => {
+    const c = m.config || {};
+    setMode(c.mode || 'simples');
+    setTitle('');
+    setQuantity(c.quantity ?? 10);
+    setSelTopics(c.topic_ids || []);
+    setComposition(Object.fromEntries((c.composition || []).map(x => [x.subject_id, x.quantity])));
+    setProvaChave(c.prova_chave || '');
+    setBanca(c.banca || ''); setAno(c.ano || '');
+    setOrgao(c.orgao || ''); setCargo(c.cargo || '');
+    setDificuldade(c.dificuldade || '');
+    setUsarDistribuicao(!!c.distribuicao);
+    if (c.distribuicao) setDist(c.distribuicao);
+    setFeedbackMode(c.feedback_mode || 'final');
+    setTimeMode(c.time_mode || 'livre');
+    if (c.total_seconds) setTotalMinutes(Math.round(c.total_seconds / 60));
+    if (c.seconds_per_question) setSecondsPerQuestion(c.seconds_per_question);
+    setNomeModelo(m.name);
+    setMsgModelo(`Configuração de “${m.name}” carregada — ajuste e salve com outro nome, se quiser.`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renomearModelo = async (m) => {
+    const nome = prompt('Novo nome do modelo:', m.name);
+    if (!nome || nome.trim() === m.name) return;
+    try {
+      const upd = await api(`/modelos/${m.id}`, { method: 'PUT', body: { name: nome.trim() } });
+      setModelos(l => l.map(x => (x.id === m.id ? upd : x)));
+    } catch (e) { setMsgModelo(e.message); }
+  };
+
+  const excluirModelo = async (m) => {
+    if (!confirm(`Excluir o modelo “${m.name}”? Os simulados já feitos com ele não são afetados.`)) return;
+    try {
+      await api(`/modelos/${m.id}`, { method: 'DELETE' });
+      setModelos(l => l.filter(x => x.id !== m.id));
+    } catch (e) { setMsgModelo(e.message); }
+  };
+
   // O candidato decide: resolver no app ou gerar a folha para impressão.
   const create = async (destination) => {
     setBusy(true); setError(''); setWarnings([]);
@@ -131,6 +234,40 @@ export default function NovoSimulado() {
 
       {error && <div className="alert alert-error">{error}</div>}
       {warnings.map((w, i) => <div className="alert alert-warn" key={i}>{w}</div>)}
+
+      {modelos.length > 0 && (
+        <section className="card modelos-card">
+          <div className="card-head">
+            <div>
+              <h2><Icons.bookmark size={18} /> Meus modelos</h2>
+              <p className="card-sub">Configurações salvas — um clique e o simulado começa.</p>
+            </div>
+          </div>
+          <div className="modelo-list">
+            {modelos.map(m => (
+              <div className="modelo-row" key={m.id}>
+                <div className="ml-main">
+                  <div className="ml-nome">{m.name}</div>
+                  <div className="ml-resumo">{resumoModelo(m.config)}</div>
+                  {m.times_used > 0 && <div className="ml-uso">usado {m.times_used}×</div>}
+                </div>
+                <div className="ml-acoes">
+                  <button className="btn btn-gold btn-sm" disabled={busy} onClick={() => iniciarModelo(m)}>
+                    <Icons.play /> Iniciar
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => carregarModelo(m)} title="Trazer esta configuração para o formulário">
+                    Ajustar
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => renomearModelo(m)} title="Renomear">✎</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => excluirModelo(m)} title="Excluir">
+                    <Icons.trash />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="card">
         <h2><span className="step-badge">1</span>Conteúdo</h2>
@@ -373,6 +510,19 @@ export default function NovoSimulado() {
       </section>
 
       <div className="solve-actions" style={{ marginTop: 24 }}>
+        <div className="salvar-modelo">
+          <label htmlFor="nome-modelo">Salvar esta configuração como modelo</label>
+          <div className="sm-linha">
+            <input id="nome-modelo" value={nomeModelo} placeholder="Ex.: Prova 1 — TJ" maxLength={60}
+              onChange={e => { setNomeModelo(e.target.value); setMsgModelo(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); salvarModelo(); } }} />
+            <button className="btn btn-ghost btn-sm" onClick={salvarModelo} disabled={salvando || !nomeModelo.trim()}>
+              <Icons.bookmark /> {salvando ? 'Salvando…' : 'Salvar modelo'}
+            </button>
+          </div>
+          {msgModelo && <div className="sm-msg">{msgModelo}</div>}
+        </div>
+
         <button className="btn btn-gold" onClick={() => create('resolver')} disabled={busy || (mode === 'prova' && !provaChave)}>
           <Icons.play /> {busy ? 'Montando…' : 'Iniciar no aplicativo'}
         </button>

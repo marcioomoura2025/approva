@@ -824,3 +824,9 @@ button { border: none; background: none; padding: 0; }
   .modelo-row .ml-acoes{width:100%;}
   .modelo-row .ml-acoes .btn:first-child{flex:1;}
 }
+
+/* Número resumido no cabeçalho de um card (ex.: total de simulados) */
+.head-stat{flex:0 0 auto;display:flex;align-items:baseline;gap:8px;text-align:right;}
+.head-stat strong{font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--ink);line-height:1;}
+.head-stat span{font-family:var(--font-mono);font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;line-height:1.35;}

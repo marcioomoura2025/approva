@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { PageHead, Spinner, Empty, Icons, StatCard, STUDY_TIPS, fmtTime } from '../components/UI';
+import { PageHead, Spinner, Empty, Icons, STUDY_TIPS } from '../components/UI';
 import Heatmap from '../components/Heatmap';
 
 export default function Dashboard() {
@@ -39,6 +39,8 @@ export default function Dashboard() {
         lead="Um resumo do seu preparo até aqui — e por onde vale continuar."
       />
 
+      {atividade && <Heatmap dados={atividade} />}
+
       {revisao.total > 0 && (
         <Link to="/revisao-programada" className="review-banner">
           <span className="rb-ic"><Icons.refresh size={20} /></span>
@@ -51,19 +53,6 @@ export default function Dashboard() {
           <span className="rb-go">Revisar <Icons.arrowRight size={16} /></span>
         </Link>
       )}
-
-      {atividade && <Heatmap dados={atividade} />}
-
-      <div className="grid grid-4">
-        <StatCard tone="navy" icon="check" label="Aproveitamento" value={geral.aproveitamento} suffix="%"
-          foot={`${geral.total_acertos} acertos em ${geral.total_respondidas} questões`} />
-        <StatCard tone="gold" icon="dominio" label="Domínio real" value={geral.dominio_real} suffix="%"
-          foot={`desconta ${geral.acertos_no_chute} acerto(s) no chute`} />
-        <StatCard icon="list" label="Simulados" value={geral.simulados_finalizados}
-          foot={`média de ${geral.media_simulados}% por prova`} />
-        <StatCard icon="clock" label="Tempo por questão" value={fmtTime(geral.tempo_medio_questao)}
-          foot="média entre todas as respostas" />
-      </div>
 
       <section className="bank-strip">
         <span className="bs-label"><Icons.db size={16} /> Banco de questões</span>
@@ -101,8 +90,18 @@ export default function Dashboard() {
         </section>
 
         <section className="card hoverable">
-          <div className="card-head"><div><h2>Simulados recentes</h2>
-          <p className="card-sub">Retome um simulado em andamento ou revise um resultado.</p></div></div>
+          <div className="card-head">
+            <div>
+              <h2>Simulados recentes</h2>
+              <p className="card-sub">Retome um simulado em andamento ou revise um resultado.</p>
+            </div>
+            {geral.simulados_finalizados > 0 && (
+              <div className="head-stat">
+                <strong>{geral.simulados_finalizados}</strong>
+                <span>{geral.simulados_finalizados === 1 ? 'simulado' : 'simulados'}<br />média {geral.media_simulados}%</span>
+              </div>
+            )}
+          </div>
           {simulados.length === 0 ? (
             <Empty icon="plus" title="Nenhum simulado ainda"
               action={<Link to="/novo" className="btn btn-gold"><Icons.play /> Montar meu primeiro simulado</Link>}>

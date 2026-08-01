@@ -14,7 +14,7 @@ async function auth(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Faça login para continuar.' });
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    const user = await get('SELECT id, name, email, role, pass_threshold FROM users WHERE id = ?', [payload.id]);
+    const user = await get('SELECT id, name, email, role, pass_threshold, exam_prompt_dismissed FROM users WHERE id = ?', [payload.id]);
     if (!user) return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' });
     req.user = user;
     next();

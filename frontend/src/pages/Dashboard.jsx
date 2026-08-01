@@ -4,11 +4,13 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { PageHead, Spinner, Empty, Icons, STUDY_TIPS } from '../components/UI';
 import Heatmap from '../components/Heatmap';
+import ExamCountdown from '../components/ExamCountdown';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const recarregarAlvos = () => api('/provas-alvo').then(a => setData(d => ({ ...d, alvos: a }))).catch(() => {});
 
   useEffect(() => {
     Promise.all([
@@ -19,14 +21,15 @@ export default function Dashboard() {
       api('/banco/resumo'),
       // O fuso do navegador define o que é "hoje" para o mapa de constância.
       api(`/stats/atividade?tz=${-new Date().getTimezoneOffset()}`),
-    ]).then(([geral, dificuldades, simulados, revisao, banco, atividade]) => {
-      setData({ geral, dificuldades, simulados: simulados.slice(0, 5), revisao, banco, atividade });
+      api('/provas-alvo'),
+    ]).then(([geral, dificuldades, simulados, revisao, banco, atividade, alvos]) => {
+      setData({ geral, dificuldades, simulados: simulados.slice(0, 5), revisao, banco, atividade, alvos });
     }).catch(e => setError(e.message));
   }, []);
 
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!data) return <Spinner />;
-  const { geral, dificuldades, simulados, revisao, banco, atividade } = data;
+  const { geral, dificuldades, simulados, revisao, banco, atividade, alvos } = data;
   const num = (n) => Number(n || 0).toLocaleString('pt-BR');
   const firstName = (user?.name || '').split(' ')[0];
   const meta = user?.pass_threshold ?? 60;
@@ -38,6 +41,8 @@ export default function Dashboard() {
         title={`Olá, ${firstName}!`}
         lead="Um resumo do seu preparo até aqui — e por onde vale continuar."
       />
+
+      <ExamCountdown dados={alvos} revisao={revisao} onChange={recarregarAlvos} />
 
       {atividade && <Heatmap dados={atividade} />}
 

@@ -831,3 +831,44 @@ button { border: none; background: none; padding: 0; }
 .head-stat strong{font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--ink);line-height:1;}
 .head-stat span{font-family:var(--font-mono);font-size:11px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.08em;line-height:1.35;}
+
+/* ============ CONTAGEM REGRESSIVA ATÉ A PROVA ============ */
+.alvo-card{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:18px;
+  padding:18px 22px;border-radius:var(--radius-lg);border:1.5px solid var(--gold);
+  background:linear-gradient(160deg,var(--tint-gold),var(--tint-gold-2));animation:fadeUp .45s ease both;}
+.alvo-card.pergunta{border-style:dashed;}
+.alvo-card .ac-ic{flex:0 0 auto;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;background:var(--gold-soft);color:var(--gold-ink);}
+.alvo-card .ac-texto{flex:1;min-width:200px;display:flex;flex-direction:column;gap:3px;}
+.alvo-card .ac-texto>strong{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--ink);}
+.alvo-card .ac-texto>span{font-size:13.5px;color:var(--muted);}
+.alvo-card .ac-plano{font-size:13px;color:var(--gold-ink);margin-top:2px;}
+.alvo-card .ac-acoes{flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;}
+.alvo-card .ac-topo{display:flex;align-items:center;gap:12px;width:100%;}
+.alvo-card .ac-topo strong{font-family:var(--font-display);font-size:17px;color:var(--ink);}
+
+.alvo-card .ac-num{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:96px;padding:10px 14px;border-radius:14px;background:var(--navy);color:var(--on-dark);}
+.alvo-card .ac-num strong{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1;}
+.alvo-card .ac-num span{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;
+  letter-spacing:.1em;opacity:.85;margin-top:4px;}
+.alvo-card.passou{border-color:var(--line);background:var(--surface);}
+.alvo-card.passou .ac-num{background:var(--muted);}
+
+.alvo-card .ac-outros{width:100%;display:flex;gap:10px;flex-wrap:wrap;padding-top:12px;
+  border-top:1px solid rgba(180,147,68,.25);}
+.alvo-card .ac-outro{font-size:12.5px;color:var(--muted);background:var(--card);
+  border:1px solid var(--line);border-radius:999px;padding:4px 12px;}
+
+.alvo-form{width:100%;}
+.alvo-form .af-campos{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+.alvo-form .field{margin-bottom:0;}
+.alvo-form input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;
+  font-size:14px;background:var(--card);color:var(--ink);}
+.alvo-form input:focus{border-color:var(--navy-600);outline:none;box-shadow:0 0 0 3px rgba(41,69,110,.1);}
+.alvo-form .af-acoes{display:flex;gap:8px;margin-top:12px;}
+.alvo-form .af-erro{margin-top:10px;font-size:13px;color:var(--bad);}
+@media (max-width:640px){
+  .alvo-form .af-campos{grid-template-columns:1fr;}
+  .alvo-card .ac-acoes{width:100%;}
+}

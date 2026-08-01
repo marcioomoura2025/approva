@@ -872,3 +872,10 @@ button { border: none; background: none; padding: 0; }
   .alvo-form .af-campos{grid-template-columns:1fr;}
   .alvo-card .ac-acoes{width:100%;}
 }
+
+/* Acesso discreto para marcar um concurso depois de dispensar a pergunta */
+.alvo-atalho{display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;
+  padding:7px 14px;border:1px dashed var(--line);border-radius:999px;background:none;
+  color:var(--muted);font-size:13px;font-weight:600;transition:border-color .15s,color .15s,background .15s;}
+.alvo-atalho:hover{border-color:var(--gold);color:var(--gold-ink);background:var(--gold-soft);}
+.alvo-atalho svg{flex:0 0 auto;}

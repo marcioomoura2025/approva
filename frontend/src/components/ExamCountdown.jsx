@@ -133,7 +133,15 @@ export default function ExamCountdown({ dados, revisao, onChange }) {
   }
 
   // ---------- 3) sem alvo e já dispensado ----------
-  if (!alvos.length) return null;
+  // Não desaparece por completo: fica um acesso discreto, para quando um
+  // concurso aparecer no meio do caminho.
+  if (!alvos.length) {
+    return (
+      <button type="button" className="alvo-atalho" onClick={abrirNovo}>
+        <Icons.calendar size={15} /> Marcar a data de um concurso
+      </button>
+    );
+  }
 
   // ---------- 4) contagem regressiva ----------
   const passados = alvos.map(a => ({ ...a, dias: diasAte(a.exam_date) })).filter(a => a.dias < 0);

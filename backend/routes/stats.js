@@ -13,7 +13,7 @@ router.get('/stats/geral', auth, async (req, res) => {
       COALESCE(SUM(CASE WHEN is_correct = 1 AND guessed = 0 THEN 1 ELSE 0 END), 0) AS solid_correct,
       COALESCE(SUM(guessed), 0) AS guesses,
       COALESCE(SUM(CASE WHEN guessed = 1 AND is_correct = 1 THEN 1 ELSE 0 END), 0) AS lucky,
-      COALESCE(AVG(time_spent), 0) AS avg_time
+      AVG(time_spent) AS avg_time
     FROM answers WHERE user_id = ?`, [req.user.id]);
   const sims = await get(`SELECT COUNT(*) AS n, COALESCE(AVG(score), 0) AS avg_score FROM simulados WHERE user_id = ? AND status = 'finalizado'`, [req.user.id]);
   const answered = Number(o.answered);
@@ -24,7 +24,7 @@ router.get('/stats/geral', auth, async (req, res) => {
     dominio_real: answered ? Math.round((Number(o.solid_correct) / answered) * 1000) / 10 : 0,
     chutes: Number(o.guesses),
     acertos_no_chute: Number(o.lucky),
-    tempo_medio_questao: Math.round(Number(o.avg_time)),
+    tempo_medio_questao: o.avg_time == null ? null : Math.round(Number(o.avg_time)),
     simulados_finalizados: Number(sims.n),
     media_simulados: Math.round(Number(sims.avg_score) * 10) / 10,
   });

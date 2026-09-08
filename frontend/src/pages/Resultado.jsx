@@ -98,6 +98,8 @@ export default function Resultado() {
         </div>
       )}
 
+      {sim.paper && <div className="alert alert-warn no-print"><Icons.print size={18} /><span><strong>Prova realizada no papel.</strong> O tempo total considera apenas o período entre início e encerramento. A transcrição não entra no tempo e não há medição por questão.</span></div>}
+
       <section className="card no-print">
         <h2>Cartão de respostas</h2>
         <p className="card-sub">Toque em uma questão para ir direto à sua revisão.</p>

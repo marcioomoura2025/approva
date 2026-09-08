@@ -33,7 +33,11 @@ export async function api(path, { method = 'GET', body, formData } = {}) {
   }
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Algo deu errado. Tente novamente.');
+  if (!res.ok) {
+    const error = new Error(data.error || 'Algo deu errado. Tente novamente.');
+    error.status = res.status;
+    throw error;
+  }
   return data;
 }
 

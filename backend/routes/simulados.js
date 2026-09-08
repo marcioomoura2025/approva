@@ -1,6 +1,7 @@
 const express = require('express');
-const { all, get, run } = require('../db');
+const { db, all, get, run } = require('../db');
 const { auth } = require('../middleware/auth');
+const { createSession, paperFor, publicPaper } = require('../paper');
 
 const router = express.Router();
 
@@ -20,9 +21,10 @@ function shuffle(arr) {
 }
 
 // ---------- Criação (Modo A: simples | Modo B: composição por matéria) ----------
-router.post('/simulados', auth, async (req, res) => {
+router.post('/simulados', auth, async (req, res, next) => {
   const b = req.body || {};
-  const feedback_mode = ['imediato', 'final'].includes(b.feedback_mode) ? b.feedback_mode : 'final';
+  const printed = b.delivery_mode === 'impresso';
+  const feedback_mode = !printed && ['imediato', 'final'].includes(b.feedback_mode) ? b.feedback_mode : 'final';
   const time_mode = ['livre', 'total', 'questao'].includes(b.time_mode) ? b.time_mode : 'livre';
   const total_seconds = time_mode === 'total' ? Math.max(60, parseInt(b.total_seconds) || 0) : null;
   const seconds_per_question = time_mode === 'questao' ? Math.max(10, parseInt(b.seconds_per_question) || 0) : null;
@@ -141,21 +143,26 @@ router.post('/simulados', auth, async (req, res) => {
   // para não agrupar por matéria.
   if (b.mode !== 'prova') questionIds = shuffle(questionIds);
 
-  const { lastId: simuladoId } = await run(`
-    INSERT INTO simulados (user_id, title, feedback_mode, time_mode, total_seconds, seconds_per_question, total_questions)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [req.user.id, String(b.title || '').trim() || null, feedback_mode, time_mode, total_seconds, seconds_per_question, questionIds.length]);
-  for (let i = 0; i < questionIds.length; i++) {
-    await run('INSERT INTO simulado_questions (simulado_id, question_id, position) VALUES (?, ?, ?)', [simuladoId, questionIds[i], i + 1]);
-  }
+  let simuladoId;
+  const tx = await db.transaction('write');
+  try {
+    const rs = await tx.execute({ sql: `INSERT INTO simulados (user_id, title, feedback_mode, time_mode, total_seconds, seconds_per_question, total_questions) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [req.user.id, String(b.title || '').trim() || null, feedback_mode, time_mode, total_seconds, seconds_per_question, questionIds.length] });
+    simuladoId = Number(rs.lastInsertRowid);
+    await tx.batch(questionIds.map((qid, i) => ({ sql: 'INSERT INTO simulado_questions (simulado_id, question_id, position) VALUES (?, ?, ?)', args: [simuladoId, qid, i + 1] })));
+    if (printed) await createSession(tx, { id: simuladoId, time_mode, total_seconds, seconds_per_question, total_questions: questionIds.length });
+    await tx.commit();
+  } catch (e) { await tx.rollback().catch(() => {}); return next(e); }
+  finally { tx.close(); }
+  if (printed && time_mode === 'questao') warnings.push('No papel, o tempo por questão foi convertido em um limite total para a prova.');
   res.status(201).json({ id: simuladoId, total_questions: questionIds.length, warnings });
 });
 
 // ---------- Lista dos simulados do usuário ----------
 router.get('/simulados', auth, async (req, res) => {
   const rows = await all(`
-    SELECT s.*, (SELECT COUNT(*) FROM answers a WHERE a.simulado_id = s.id) AS answered_count
-    FROM simulados s WHERE s.user_id = ? ORDER BY s.id DESC LIMIT 50`, [req.user.id]);
+    SELECT s.*, p.phase AS paper_phase, (SELECT COUNT(*) FROM answers a WHERE a.simulado_id = s.id) AS answered_count
+    FROM simulados s LEFT JOIN paper_sessions p ON p.simulado_id = s.id WHERE s.user_id = ? ORDER BY s.id DESC LIMIT 50`, [req.user.id]);
   res.json(rows.map(r => ({ ...r, answered_count: Number(r.answered_count) })));
 });
 
@@ -171,13 +178,14 @@ async function finishSimulado(sim) {
   const score = sim.total_questions ? Math.round((correct / sim.total_questions) * 1000) / 10 : 0;
   const createdMs = Date.parse(sim.created_at + 'Z');
   const elapsed = Number.isFinite(createdMs) ? Math.max(0, Math.round((Date.now() - createdMs) / 1000)) : Number(stats.time_sum);
-  await run(`UPDATE simulados SET status = 'finalizado', correct_count = ?, score = ?, elapsed_seconds = COALESCE(elapsed_seconds, ?), finished_at = datetime('now') WHERE id = ?`,
+  await run(`UPDATE simulados SET status = 'finalizado', correct_count = ?, score = ?, elapsed_seconds = COALESCE(elapsed_seconds, ?), finished_at = datetime('now') WHERE id = ? AND NOT EXISTS (SELECT 1 FROM paper_sessions WHERE simulado_id = simulados.id)`,
     [correct, score, elapsed, sim.id]);
   return get('SELECT * FROM simulados WHERE id = ?', [sim.id]);
 }
 
 // Encerramento automático quando o tempo total esgota.
 async function autoFinishIfExpired(sim) {
+  if (await paperFor(sim.id)) return sim;
   if (sim.status !== 'em_andamento' || sim.time_mode !== 'total') return sim;
   const createdMs = Date.parse(sim.created_at + 'Z');
   if (Number.isFinite(createdMs) && (Date.now() - createdMs) / 1000 >= sim.total_seconds) {
@@ -191,6 +199,8 @@ router.get('/simulados/:id', auth, async (req, res) => {
   let sim = await loadSimulado(req.params.id, req.user.id);
   if (!sim) return res.status(404).json({ error: 'Simulado não encontrado.' });
   sim = await autoFinishIfExpired(sim);
+
+  const paper = await paperFor(sim.id);
 
   const rows = await all(`
     SELECT sq.position, q.*, t.name AS topic_name, s2.name AS subject_name,
@@ -210,7 +220,7 @@ router.get('/simulados/:id', auth, async (req, res) => {
   const questions = rows.map(r => {
     const answered = r.answer_id != null;
     // Gabarito só é incluído quando revelável: respondida em modo imediato, ou simulado finalizado.
-    const revealable = finished || (sim.feedback_mode === 'imediato' && answered);
+    const revealable = finished || (!paper && sim.feedback_mode === 'imediato' && answered);
     const base = {
       id: r.id, position: r.position,
       statement: r.statement, options: JSON.parse(r.options),
@@ -222,6 +232,7 @@ router.get('/simulados/:id', auth, async (req, res) => {
       selected_index: answered ? r.selected_index : null,
       guessed: answered ? !!r.guessed : false,
       time_spent: r.time_spent,
+      paper_answer: !!paper,
       favorite: !!r.favorite, review: !!r.review, note: r.note || '',
     };
     if (revealable) {
@@ -235,6 +246,7 @@ router.get('/simulados/:id', auth, async (req, res) => {
 
   res.json({
     id: sim.id, title: sim.title, status: sim.status,
+    paper: publicPaper(paper),
     feedback_mode: sim.feedback_mode, time_mode: sim.time_mode,
     total_seconds: sim.total_seconds, seconds_per_question: sim.seconds_per_question,
     total_questions: sim.total_questions, correct_count: sim.correct_count,
@@ -250,6 +262,7 @@ router.get('/simulados/:id', auth, async (req, res) => {
 router.post('/simulados/:id/responder', auth, async (req, res) => {
   let sim = await loadSimulado(req.params.id, req.user.id);
   if (!sim) return res.status(404).json({ error: 'Simulado não encontrado.' });
+  if (await paperFor(sim.id)) return res.status(409).json({ error: 'Use o cartão de respostas da prova impressa.' });
   sim = await autoFinishIfExpired(sim);
   if (sim.status !== 'em_andamento') return res.status(409).json({ error: 'Este simulado já foi finalizado.' });
 
@@ -271,10 +284,11 @@ router.post('/simulados/:id/responder', auth, async (req, res) => {
   }
   // Tempo esgotado sem resposta conta como erro, sem alternativa marcada.
   const isCorrect = sel !== null && sel === q.correct_index ? 1 : 0;
-  await run(`
+  const inserted = await run(`
     INSERT INTO answers (simulado_id, question_id, user_id, selected_index, is_correct, guessed, time_spent)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [sim.id, question_id, req.user.id, sel, isCorrect, guessed ? 1 : 0, Math.max(0, parseInt(time_spent) || 0)]);
+    SELECT ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM paper_sessions WHERE simulado_id = ?)`,
+    [sim.id, question_id, req.user.id, sel, isCorrect, guessed ? 1 : 0, Math.max(0, parseInt(time_spent) || 0), sim.id]);
+  if (!inserted.changes) return res.status(409).json({ error: 'Esta tentativa passou para o modo impresso. Abra o painel da prova.' });
 
   if (sim.feedback_mode === 'imediato') {
     // Modo estudo: devolve o gabarito na hora.
@@ -302,12 +316,13 @@ router.post('/simulados/:id/chute', auth, async (req, res) => {
 router.post('/simulados/:id/finalizar', auth, async (req, res) => {
   let sim = await loadSimulado(req.params.id, req.user.id);
   if (!sim) return res.status(404).json({ error: 'Simulado não encontrado.' });
+  if (await paperFor(sim.id)) return res.status(409).json({ error: 'Encerre e corrija a prova pelo painel do modo impresso.' });
   if (sim.status === 'finalizado') {
     return res.json({ ...sim, pass_threshold: passOf(req.user), approved: sim.score >= passOf(req.user) });
   }
   const elapsed = parseInt(req.body?.elapsed_seconds);
   if (Number.isFinite(elapsed) && elapsed >= 0) {
-    await run('UPDATE simulados SET elapsed_seconds = ? WHERE id = ?', [elapsed, sim.id]);
+    await run('UPDATE simulados SET elapsed_seconds = ? WHERE id = ? AND NOT EXISTS (SELECT 1 FROM paper_sessions WHERE simulado_id = simulados.id)', [elapsed, sim.id]);
     sim.elapsed_seconds = elapsed;
   }
   const finished = await finishSimulado(sim);
@@ -319,6 +334,9 @@ router.post('/simulados/:id/finalizar', auth, async (req, res) => {
 router.get('/simulados/:id/impressao', auth, async (req, res) => {
   const sim = await loadSimulado(req.params.id, req.user.id);
   if (!sim) return res.status(404).json({ error: 'Simulado não encontrado.' });
+  const paper = await paperFor(sim.id);
+  const answerCount = await get('SELECT COUNT(*) AS n FROM answers WHERE simulado_id = ?', [sim.id]);
+  if (req.query.gabarito === '1' && sim.status !== 'finalizado') return res.status(403).json({ error: 'O gabarito só fica disponível depois da correção definitiva.' });
   const rows = await all(`
     SELECT sq.position, q.id, q.statement, q.options, q.correct_index, q.banca, q.ano, q.orgao, q.image_url,
       t.name AS topic_name, s2.name AS subject_name,
@@ -333,6 +351,7 @@ router.get('/simulados/:id/impressao', auth, async (req, res) => {
   const includeKey = req.query.gabarito === '1';
   res.json({
     id: sim.id, title: sim.title, total_questions: sim.total_questions, created_at: sim.created_at,
+    status: sim.status, paper: publicPaper(paper), answered_count: Number(answerCount.n), time_mode: sim.time_mode,
     questions: rows.map(r => ({
       position: r.position, statement: r.statement, options: JSON.parse(r.options),
       banca: r.banca, ano: r.ano, orgao: r.orgao, image_url: r.image_url,

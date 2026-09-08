@@ -126,12 +126,12 @@ export default function Dashboard() {
                       <td>
                         {s.status === 'finalizado'
                           ? <span className={`badge ${s.score >= meta ? 'badge-ok' : 'badge-bad'}`}>{s.score}%</span>
-                          : <span className="badge badge-gold">{s.answered_count}/{s.total_questions} respondidas</span>}
+                          : <span className="badge badge-gold">{s.paper_phase ? ({ ready: 'No papel · pronta', running: 'No papel · em andamento', transcribing: 'Aguardando respostas' }[s.paper_phase] || 'No papel') : `${s.answered_count}/${s.total_questions} respondidas`}</span>}
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         {s.status === 'finalizado'
                           ? <Link className="btn btn-ghost btn-sm" to={`/simulados/${s.id}/resultado`}>Ver resultado</Link>
-                          : <Link className="btn btn-primary btn-sm" to={`/simulados/${s.id}`}>Continuar</Link>}
+                          : <Link className="btn btn-primary btn-sm" to={`/simulados/${s.id}${s.paper_phase ? '/impresso' : ''}`}>Continuar</Link>}
                       </td>
                     </tr>
                   ))}

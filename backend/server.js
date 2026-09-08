@@ -14,6 +14,7 @@ app.use('/api', require('./routes/catalog'));
 app.use('/api', require('./routes/questions'));
 app.use('/api', require('./routes/importacao'));
 app.use('/api', require('./routes/simulados'));
+app.use('/api', require('./routes/impresso'));
 app.use('/api', require('./routes/interacoes'));
 app.use('/api', require('./routes/stats'));
 app.use('/api', require('./routes/revisao'));

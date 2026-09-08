@@ -74,8 +74,8 @@ export default function Desempenho() {
           foot={`${geral.chutes} chute(s), ${geral.acertos_no_chute} deram certo`} />
         <StatCard tone="chute" icon="foot" label="Total de chutes" value={geral.chutes}
           foot={`${pctChutes}% das respostas foram na sorte`} />
-        <StatCard icon="clock" label="Tempo médio / questão" value={fmtTime(geral.tempo_medio_questao)}
-          foot="minutos:segundos" />
+        <StatCard icon="clock" label="Tempo médio / questão" value={geral.tempo_medio_questao == null ? '—' : fmtTime(geral.tempo_medio_questao)}
+          foot="Somente questões cronometradas no aplicativo" />
       </div>
 
       <section className="card" style={{ marginTop: 18 }}>

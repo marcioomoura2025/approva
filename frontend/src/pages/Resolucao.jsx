@@ -29,6 +29,7 @@ export default function Resolucao() {
   const load = useCallback(async () => {
     try {
       const d = await api(`/simulados/${id}`);
+      if (d.paper && d.status !== 'finalizado') { navigate(`/simulados/${id}/impresso`, { replace: true }); return; }
       if (d.status === 'finalizado') { navigate(`/simulados/${id}/resultado`, { replace: true }); return; }
       setSim(d);
       // No modo "tempo por questão" a navegação é sequencial: sempre a 1ª não respondida.

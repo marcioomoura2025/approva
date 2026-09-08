@@ -8,6 +8,7 @@ import NovoSimulado from './pages/NovoSimulado';
 import Resolucao from './pages/Resolucao';
 import Resultado from './pages/Resultado';
 import Impressao from './pages/Impressao';
+import ProvaImpressa from './pages/ProvaImpressa';
 import Revisoes from './pages/Revisoes';
 import RevisaoProgramada from './pages/RevisaoProgramada';
 import Desempenho from './pages/Desempenho';
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="/banco" element={<Private><AdminOnly><Banco /></AdminOnly></Private>} />
 
           <Route path="/simulados/:id/imprimir" element={<PrivateBare><Impressao /></PrivateBare>} />
+          <Route path="/simulados/:id/impresso" element={<Private><ProvaImpressa /></Private>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

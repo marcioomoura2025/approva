@@ -161,6 +161,19 @@ async function init() {
     )`);
   await db.execute('CREATE INDEX IF NOT EXISTS idx_templates_user ON simulado_templates(user_id)');
 
+  // Migração aditiva: não altera respostas, usuários ou simulados anteriores.
+  await db.execute(`CREATE TABLE IF NOT EXISTS paper_sessions (
+    simulado_id INTEGER PRIMARY KEY REFERENCES simulados(id) ON DELETE CASCADE,
+    phase TEXT NOT NULL DEFAULT 'ready' CHECK (phase IN ('ready', 'running', 'transcribing', 'corrected')),
+    started_at TEXT,
+    ended_at TEXT,
+    elapsed_seconds INTEGER,
+    time_limit_seconds INTEGER,
+    end_reason TEXT,
+    draft_json TEXT NOT NULL DEFAULT '[]',
+    revision INTEGER NOT NULL DEFAULT 0
+  )`);
+
 }
 
 module.exports = { db, all, get, run, init };

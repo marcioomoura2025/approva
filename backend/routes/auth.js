@@ -73,6 +73,7 @@ router.delete('/me/dados', auth, async (req, res) => {
 
   // Ordem importa: filhos primeiro, para não deixar registros órfãos.
   await run('DELETE FROM answers WHERE user_id = ?', [uid]);
+  await run('DELETE FROM paper_sessions WHERE simulado_id IN (SELECT id FROM simulados WHERE user_id = ?)', [uid]);
   await run('DELETE FROM simulado_questions WHERE simulado_id IN (SELECT id FROM simulados WHERE user_id = ?)', [uid]);
   await run('DELETE FROM simulados WHERE user_id = ?', [uid]);
   if (apagarMarcacoes) await run('DELETE FROM user_question_state WHERE user_id = ?', [uid]);

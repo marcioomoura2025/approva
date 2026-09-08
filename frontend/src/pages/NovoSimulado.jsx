@@ -158,9 +158,9 @@ export default function NovoSimulado() {
   const iniciarModelo = async (m, destino = 'resolver') => {
     setBusy(true); setError(''); setWarnings([]);
     try {
-      const d = await api('/simulados', { method: 'POST', body: { ...m.config, title: m.name } });
+      const d = await api('/simulados', { method: 'POST', body: { ...m.config, title: m.name, delivery_mode: destino === 'imprimir' ? 'impresso' : 'digital' } });
       api(`/modelos/${m.id}/usado`, { method: 'POST' }).catch(() => {});
-      if (destino === 'imprimir') navigate(`/simulados/${d.id}/imprimir`);
+      if (destino === 'imprimir') navigate(`/simulados/${d.id}/imprimir`, { state: { warnings: d.warnings } });
       else navigate(`/simulados/${d.id}`, { state: { warnings: d.warnings } });
     } catch (e) { setError(e.message); setBusy(false); }
   };
@@ -209,11 +209,8 @@ export default function NovoSimulado() {
   const create = async (destination) => {
     setBusy(true); setError(''); setWarnings([]);
     try {
-      const d = await api('/simulados', { method: 'POST', body: buildPayload() });
-      if (d.warnings?.length && destination === 'imprimir') {
-        // Avisos ainda aparecem na tela de impressão via query? Simples: seguem no state da navegação.
-      }
-      if (destination === 'imprimir') navigate(`/simulados/${d.id}/imprimir`);
+      const d = await api('/simulados', { method: 'POST', body: { ...buildPayload(), delivery_mode: destination === 'imprimir' ? 'impresso' : 'digital' } });
+      if (destination === 'imprimir') navigate(`/simulados/${d.id}/imprimir`, { state: { warnings: d.warnings } });
       else navigate(`/simulados/${d.id}`, { state: { warnings: d.warnings } });
     } catch (e) {
       setError(e.message);
@@ -509,6 +506,7 @@ export default function NovoSimulado() {
         </div>
       </section>
 
+      <p className="card-sub" style={{ marginTop: 24 }}>No papel, o cronômetro começa no painel após a impressão e a correção acontece depois da transcrição. Se escolher tempo por questão, ele será convertido em um limite total.</p>
       <div className="solve-actions" style={{ marginTop: 24 }}>
         <div className="salvar-modelo">
           <label htmlFor="nome-modelo">Salvar esta configuração como modelo</label>
